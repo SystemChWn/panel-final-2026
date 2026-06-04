@@ -5,6 +5,11 @@ from datetime import datetime
 from io import BytesIO
 import time
 from streamlit_autorefresh import st_autorefresh
+import pytz
+from datetime import datetime
+
+mexico_tz = pytz.timezone('America/Mexico_City')
+ahora = datetime.now(mexico_tz)
 
 st_autorefresh(interval=120000)
 
@@ -370,6 +375,34 @@ st.dataframe(
     hide_index=True,
     column_config=configuracion_nombres_cortos  # <--- Aplicamos los nuevos nombres aquí
 )
+
+ahora_mx = datetime.now(mexico_tz)
+hora_actual = ahora_mx.hour
+
+# Determinar Turno automáticamente según la hora
+# Si son las 7:00 a 18:59 es DIA, de lo contrario es NOCHE
+turno_calculado = "DIA" if 7 <= hora_actual < 19 else "NOCHE"
+
+# Si el usuario NO ha cambiado el selector manualmente, usamos el calculado
+# (Opcional: puedes dejar que el usuario lo cambie si quiere forzar la vista)
+turno_seleccionado = turno_calculado 
+
+# Determinar el rondin basado en la hora exacta
+hora_str = ahora_mx.strftime("%H:%M:%S")
+rondin_actual_nombre = determinar_bloque_rondin(hora_str)
+
+# --- APLICAR LA LOGICA AL DASHBOARD ---
+# Aseguramos que solo mostramos columnas que existan en el turno actual
+if turno_seleccionado == "DIA":
+    columnas_rondines = ["Rondin 1 (07:00-09:00)", "Rondin 2 (09:00-11:00)", ...] # Tus columnas de día
+else:
+    columnas_rondines = ["Rondin 1 (19:00-21:00)", "Rondin 2 (21:00-23:00)", ...] # Tus columnas de noche
+
+# Si el rondin calculado no pertenece al turno actual, el sistema mostrará el primero del turno
+if rondin_actual_nombre not in columnas_rondines:
+    rondin_a_mostrar = columnas_rondines[0]
+else:
+    rondin_a_mostrar = rondin_actual_nombre
 
 # FIRMA PROFESIONAL
 st.markdown("---")
