@@ -5,7 +5,7 @@ from datetime import datetime
 from io import BytesIO
 from streamlit_autorefresh import st_autorefresh # <--- IMPORTANTE
 
-st_autorefresh(interval=120000, key="datetimereload")
+st_autorefresh(interval=120000)
 
 # CONFIGURACIÓN DE PÁGINA
 st.set_page_config(
