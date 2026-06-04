@@ -283,21 +283,19 @@ with dash_col1:
 with dash_col2:
     st.markdown('<p class="graph-title">ESTATUS DEL RONDÍN ACTUAL</p>', unsafe_allow_html=True)
     
-    # Obtenemos la hora real en cada refresco
     hora_actual_sistema = datetime.now().strftime("%H:%M:%S")
-    rondin_actual_nombre = determinar_bloque_rondin(hora_actual_sistema)
+    rondin_calculado = determinar_bloque_rondin(hora_actual_sistema)
     
-    # Si la hora actual no cae en un rondin, mostramos el primero por defecto
-    if rondin_actual_nombre == "Fuera de Tiempo" or rondin_actual_nombre == "Sin Horario":
-        rondin_mostrado = columnas_rondines[0]
+    if rondin_calculado in columnas_rondines:
+        rondin_a_mostrar = rondin_calculado
     else:
-        rondin_mostrado = rondin_actual_nombre
+        rondin_a_mostrar = columnas_rondines[0]
         
-    puntos_completados_ahora = (matriz_construida[rondin_mostrado] == "SI").sum()
+    puntos_completados_ahora = (matriz_construida[rondin_a_mostrar] == "SI").sum()
     porcentaje_barra = puntos_completados_ahora / 44
     
     st.markdown(f'<p class="clock-value" style="font-size: 20px; color: #114D7D; margin-top: 15px;">TURNO: {turno_seleccionado}</p>', unsafe_allow_html=True)
-    st.markdown(f'<p class="graph-title" style="font-size: 18px; font-weight: bold; color: #333;">{rondin_mostrado}</p>', unsafe_allow_html=True)
+    st.markdown(f'<p class="graph-title" style="font-size: 18px; font-weight: bold; color: #333;">{rondin_a_mostrar}</p>', unsafe_allow_html=True)
     st.markdown(f'<p class="clock-sub">Progreso: {puntos_completados_ahora} de 44 puntos escaneados</p>', unsafe_allow_html=True)
     st.progress(float(porcentaje_barra))
 
