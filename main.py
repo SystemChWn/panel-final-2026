@@ -3,7 +3,9 @@ import pandas as pd
 import plotly.express as px
 from datetime import datetime
 from io import BytesIO
-import time
+from streamlit_autorefresh import st_autorefresh # <--- IMPORTANTE
+
+st_autorefresh(interval=120000, key="datetimereload")
 
 # CONFIGURACIÓN DE PÁGINA
 st.set_page_config(
