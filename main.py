@@ -12,19 +12,9 @@ st.set_page_config(
     layout="wide"
 )
 
-# =========================================================
 # SCRIPT DE REFRESCO AUTOMÁTICO (CADA 2 MINUTOS)
-# =========================================================
-if "last_refresh" not in st.session_state:
-    st.session_state.last_refresh = time.time()
-
-st.fragment(lambda: None)() 
-st.markdown(
-    """
-    <iframe src="about:blank" style="display:none" sandbox="allow-scripts"></iframe>
-    """,
-    unsafe_allow_html=True
-)
+from streamlit_autorefresh import st_autorefresh
+st_autorefresh(interval=120000, key="datetimereload")
 
 # CSS PERSONALIZADO
 st.markdown(
@@ -384,9 +374,3 @@ st.markdown(
     '<p style="font-size: 8px; color: #aaaaaa; text-align: left; margin-top: -10px;"> Desarrollado y diseñado por: Fernanda Ibarra | Auxiliar de Sistemas Computacionales • Gestión 2026</p>', 
     unsafe_allow_html=True
 )
-
-# =========================================================
-# MECANISMO DE CONTROL DEL RELOJ DE REFRESCO
-# =========================================================
-time.sleep(120)
-st.rerun()
