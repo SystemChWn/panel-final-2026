@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 from datetime import datetime
 from io import BytesIO
-import time  # <--- ESTA LÍNEA ES LA QUE TE FALTA
+import time
 from streamlit_autorefresh import st_autorefresh
 
 st_autorefresh(interval=120000)
@@ -49,12 +49,10 @@ st.markdown(
         margin-bottom: 20px;
     }
 
-    /* 1. FONDO DE LA BARRA LATERAL (AZUL MARINO) */
     div[data-testid="stSidebar"] {
         background-color: #02174F !important;
     }
     
-    /* 2. TEXTO DE LA BARRA LATERAL (BLANCO PARA QUE SE VEA) */
     div[data-testid="stSidebar"] .stMarkdown, 
     div[data-testid="stSidebar"] h1, 
     div[data-testid="stSidebar"] h2,
@@ -131,6 +129,7 @@ hoy_mes = ahora.month
 hoy_anio = ahora.year
 hoy_hora = ahora.hour
 
+# El turno cambia automáticamente según la hora
 turno_sugerido_idx = 0 if 7 <= hoy_hora < 19 else 1
 
 # =========================================================
@@ -283,19 +282,22 @@ with dash_col1:
 # --- GRÁFICO 2: BARRA DE PROGRESO DE PUNTOS EN VERDE ---
 with dash_col2:
     st.markdown('<p class="graph-title">ESTATUS DEL RONDÍN ACTUAL</p>', unsafe_allow_html=True)
-    hora_sistema_texto = datetime.now().strftime("%H:%M:%S")
-    rondin_actual_nombre = determinar_bloque_rondin(hora_sistema_texto)
     
-    if rondin_actual_nombre not in columnas_rondines:
-        rondin_actual_nombre = columnas_rondines[0]
+    # Obtenemos la hora real en cada refresco
+    hora_actual_sistema = datetime.now().strftime("%H:%M:%S")
+    rondin_actual_nombre = determinar_bloque_rondin(hora_actual_sistema)
+    
+    # Si la hora actual no cae en un rondin, mostramos el primero por defecto
+    if rondin_actual_nombre == "Fuera de Tiempo" or rondin_actual_nombre == "Sin Horario":
+        rondin_mostrado = columnas_rondines[0]
+    else:
+        rondin_mostrado = rondin_actual_nombre
         
-    puntos_completados_ahora = (matriz_construida[rondin_actual_nombre] == "SI").sum()
+    puntos_completados_ahora = (matriz_construida[rondin_mostrado] == "SI").sum()
     porcentaje_barra = puntos_completados_ahora / 44
     
-    # MODIFICACIÓN: Mostramos el Turno activo y el Rondín con su horario completo
     st.markdown(f'<p class="clock-value" style="font-size: 20px; color: #114D7D; margin-top: 15px;">TURNO: {turno_seleccionado}</p>', unsafe_allow_html=True)
-    st.markdown(f'<p class="graph-title" style="font-size: 18px; font-weight: bold; color: #333;">{rondin_actual_nombre}</p>', unsafe_allow_html=True)
-    
+    st.markdown(f'<p class="graph-title" style="font-size: 18px; font-weight: bold; color: #333;">{rondin_mostrado}</p>', unsafe_allow_html=True)
     st.markdown(f'<p class="clock-sub">Progreso: {puntos_completados_ahora} de 44 puntos escaneados</p>', unsafe_allow_html=True)
     st.progress(float(porcentaje_barra))
 
