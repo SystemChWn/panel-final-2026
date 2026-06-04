@@ -3,7 +3,8 @@ import pandas as pd
 import plotly.express as px
 from datetime import datetime
 from io import BytesIO
-from streamlit_autorefresh import st_autorefresh # <--- IMPORTANTE
+import time  # <--- ESTA LÍNEA ES LA QUE TE FALTA
+from streamlit_autorefresh import st_autorefresh
 
 st_autorefresh(interval=120000)
 
