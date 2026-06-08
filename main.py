@@ -301,7 +301,7 @@ st.dataframe(
     df_estilizado,
     use_container_width=True,
     hide_index=True,
-    height=800
+    height=460
 )
 
 # =========================================================
