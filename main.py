@@ -305,6 +305,7 @@ st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 fecha_pantalla_str = f"{dia_seleccionado:02d}/{numero_mes:02d}/{anio_seleccionado}"
 st.subheader(f"CONTROL DE RONDINES ({turno_seleccionado}) — FECHA: {fecha_pantalla_str}")
 
+# 1. Definir la función PRIMERO
 def color_semaforo_suave(val):
     v = str(val).strip()
     if v == "SI":
@@ -313,7 +314,11 @@ def color_semaforo_suave(val):
         return 'background-color: #F8D7DA; color: #721C24; text-align: center;'
     return 'text-align: center;'
 
-df_estilizado = matriz_construida.style.map(color_semaforo_suave, subset=columnas_rondines).map(lambda x: 'text-align: center; font-weight: bold; background-color: #F8F9FA;', subset=["TOTAL"])
+# 2. LUEGO usar la función en el DataFrame
+df_estilizado = matriz_construida.style.map(color_semaforo_suave, subset=columnas_rondines).map(
+    lambda x: 'text-align: center; font-weight: bold; background-color: #F8F9FA; color: #000000;', 
+    subset=["TOTAL"]
+)
 
 st.dataframe(
     df_estilizado,
