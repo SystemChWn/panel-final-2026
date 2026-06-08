@@ -7,6 +7,8 @@ import time
 import pytz
 from streamlit_autorefresh import st_autorefresh
 
+rondin_actual_en_vivo = determinar_bloque_rondin(ahora.strftime("%H:%M:%S"))
+
 # 1. PRIMERO LA FUNCIÓN (Para que exista antes de usarla)
 def obtener_hora_local():
     tz = pytz.timezone('America/Mexico_City')
@@ -25,7 +27,7 @@ hoy_anio = ahora.year
 hoy_hora = ahora.hour
 
 # 3. Y añade justo debajo, para que la variable esté disponible para tus gráficas:
-rondin_actual_en_vivo = determinar_bloque_rondin(ahora.strftime("%H:%M:%S"))
+
 
 # 4. El turno cambia automáticamente según la hora
 turno_sugerido_idx = 0 if 7 <= hoy_hora < 19 else 1
