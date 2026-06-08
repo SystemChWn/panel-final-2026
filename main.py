@@ -269,11 +269,11 @@ with dash_col1:
 with dash_col2:
     st.markdown('<p class="graph-title">ESTATUS DEL RONDÍN ACTUAL</p>', unsafe_allow_html=True)
     
-    hora_actual_sistema = datetime.now().strftime("%H:%M:%S")
-    rondin_calculado = determinar_bloque_rondin(hora_actual_sistema)
-    
-    if rondin_calculado in columnas_rondines:
-        rondin_a_mostrar = rondin_calculado
+    # Usamos la variable que calculamos globalmente al inicio (rondin_actual_en_vivo)
+    # Si el rondín actual calculado no está en las columnas (ej: fuera de horario), 
+    # usamos el primero de la lista de columnas_rondines para evitar errores.
+    if rondin_actual_en_vivo in columnas_rondines:
+        rondin_a_mostrar = rondin_actual_en_vivo
     else:
         rondin_a_mostrar = columnas_rondines[0]
         
