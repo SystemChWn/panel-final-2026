@@ -317,10 +317,10 @@ df_recuadro_separado = df_recuadro_separado[columnas_ordenadas]
 
 def estilar_barra_totales(df):
     estilos = pd.DataFrame('', index=df.index, columns=df.columns)
-    estilos["Punto_QR"] = 'background-color: #E9ECEF; color: #212529; font-weight: bold; text-align: center;'
-    estilos["TOTAL"] = 'background-color: #155724; color: white; font-weight: bold; text-align: center;'
+    estilos["Punto_QR"] = 'background-color: #333333; color: #333333; font-weight: bold; text-align: center;'
+    estilos["TOTAL"] = 'background-color: #333333; color: white; font-weight: bold; text-align: center;'
     for col in columnas_rondines:
-        estilos[col] = 'background-color: #C3E6CB; color: #155724; font-weight: bold; text-align: center;'
+        estilos[col] = 'background-color: #333333; color: #333333; font-weight: bold; text-align: center;'
     return estilos
 
 df_recuadro_estilizado = df_recuadro_separado.style.apply(estilar_barra_totales, axis=None)
