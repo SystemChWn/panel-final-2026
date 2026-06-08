@@ -381,40 +381,40 @@ st.markdown(
 # --- ESTO PONLO AL FINAL DE TU ARCHIVO ---
 
 with st.sidebar:
-        
-        email_destino = st.text_input("Correo electrónico destino:")
-        password_autorizacion = st.text_input("Contraseña autorizada:", type="password")
-        
-        if st.button("Enviar Reporte Ahora"):
-            if not email_destino or not password_autorizacion:
-                st.error("Por favor, ingresa el correo y la contraseña.")
-            else:
-                try:
-                    # 1. Definir y limpiar nombre
-                    nombre_archivo_final = f"Reporte_{fecha_archivo_str}_{turno_seleccionado}.xlsx"
-                    nombre_seguro = re.sub(r'[^a-zA-Z0-9_.]', '', nombre_archivo_final)
-                    
-                    # 2. Preparar email
-                    msg = EmailMessage()
-                    msg["Subject"] = f"Reporte de Rondines - {fecha_archivo_str}"
-                    msg["From"] = st.secrets["EMAIL_USUARIO"]
-                    msg["To"] = email_destino
-                    msg.set_content("Adjunto encontrarás el reporte de rondines solicitado.")
-                    
-                    buffer.seek(0)
-                    msg.add_attachment(
-                        buffer.read(),
-                        maintype="application",
-                        subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        filename=nombre_seguro 
-                    )
-                    
-                    # 3. Enviar
-                    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-                        smtp.login(st.secrets["EMAIL_USUARIO"], password_autorizacion)
-                        smtp.send_message(msg)
-                    
-                    st.success("¡Enviado con éxito!")
-                    
-                except Exception as e:
-                    st.error(f"Error al enviar: {e}")
+# Quitamos el campo de contraseña y dejamos solo el de correo destino
+    email_destino = st.text_input("Enviar reporte a:")
+    
+    if st.button("Enviar Reporte Automático"):
+        if not email_destino:
+            st.error("Por favor, ingresa un correo.")
+        else:
+            try:
+                # 1. Nombre del archivo
+                nombre_archivo_final = f"Reporte_{fecha_archivo_str}_{turno_seleccionado}.xlsx"
+                nombre_seguro = re.sub(r'[^a-zA-Z0-9_.]', '', nombre_archivo_final)
+                
+                # 2. Preparar email
+                msg = EmailMessage()
+                msg["Subject"] = f"Reporte de Rondines - {fecha_archivo_str}"
+                msg["From"] = st.secrets["EMAIL_USUARIO"]
+                msg["To"] = email_destino
+                msg.set_content("Reporte generado automáticamente.")
+                
+                buffer.seek(0)
+                msg.add_attachment(
+                    buffer.read(),
+                    maintype="application",
+                    subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    filename=nombre_seguro 
+                )
+                
+                # 3. Envío AUTOMÁTICO (usa los datos de Secrets)
+                with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+                    # Aquí toma la contraseña de forma automática y oculta
+                    smtp.login(st.secrets["EMAIL_USUARIO"], st.secrets["EMAIL_PASSWORD"])
+                    smtp.send_message(msg)
+                
+                st.success("¡Enviado automáticamente!")
+                
+            except Exception as e:
+                st.error(f"Error al enviar: {e}")
