@@ -381,40 +381,36 @@ st.markdown(
 # --- ESTO PONLO AL FINAL DE TU ARCHIVO ---
 
 with st.sidebar:
-# Quitamos el campo de contraseña y dejamos solo el de correo destino
+# 1. Campo para el correo destino
     email_destino = st.text_input("Enviar reporte a:")
     
-    if st.button("Enviar Reporte Automático"):
+    # 2. Botón de envío directo
+    if st.button("Enviar Reporte"):
         if not email_destino:
-            st.error("Por favor, ingresa un correo.")
+            st.error("Ingresa un correo primero.")
         else:
             try:
-                # 1. Nombre del archivo
-                nombre_archivo_final = f"Reporte_{fecha_archivo_str}_{turno_seleccionado}.xlsx"
-                nombre_seguro = re.sub(r'[^a-zA-Z0-9_.]', '', nombre_archivo_final)
-                
-                # 2. Preparar email
+                # Preparar mensaje
                 msg = EmailMessage()
                 msg["Subject"] = f"Reporte de Rondines - {fecha_archivo_str}"
                 msg["From"] = st.secrets["EMAIL_USUARIO"]
                 msg["To"] = email_destino
-                msg.set_content("Reporte generado automáticamente.")
+                msg.set_content("Reporte adjunto.")
                 
                 buffer.seek(0)
                 msg.add_attachment(
                     buffer.read(),
                     maintype="application",
                     subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    filename=nombre_seguro 
+                    filename=f"Reporte_{fecha_archivo_str}.xlsx"
                 )
                 
-                # 3. Envío AUTOMÁTICO (usa los datos de Secrets)
+                # Envío automático con credenciales guardadas
                 with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-                    # Aquí toma la contraseña de forma automática y oculta
                     smtp.login(st.secrets["EMAIL_USUARIO"], st.secrets["EMAIL_PASSWORD"])
                     smtp.send_message(msg)
                 
-                st.success("¡Enviado automáticamente!")
+                st.success("¡Enviado!")
                 
             except Exception as e:
-                st.error(f"Error al enviar: {e}")
+                st.error(f"Error: {e}")
