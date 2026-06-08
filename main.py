@@ -66,7 +66,7 @@ st.markdown(
 
     /* 3. Elimina el espacio extra al final del sidebar */
     [data-testid="stSidebar"] div[data-testid="stSidebarContent"] {
-        padding-bottom: 0px !important;
+        padding-bottom: -10px !important;
     }
     </style>
     """,
