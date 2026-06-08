@@ -373,6 +373,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# =========================================================
+# ENVIO DE REPORTE AUTOMATICO
+# =========================================================
 st.sidebar.markdown("---")
 st.sidebar.subheader("📧 Envío de Reporte")
 email_destino = st.sidebar.text_input("Correo electrónico:")
@@ -391,13 +394,22 @@ if st.sidebar.button("Enviar Reporte por Correo"):
             
             # Adjuntar el archivo Excel que ya tienes en 'buffer'
             buffer.seek(0)
-            msg.add_attachment(
-                buffer.read(),
-                maintype="application",
-                subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                filename=f"Reporte_{fecha_archivo_str}.xlsx"
-            )
-            
+# Definimos el nombre exacto que quieres
+nombre_archivo_final = f"Reporte_{fecha_archivo_str}_{turno_seleccionado}.xlsx"
+
+# Eliminamos cualquier carácter que no sea A-Z, 0-9, guion bajo o punto
+# Esto garantiza al 100% que no haya 'ñ', acentos o caracteres invisibles
+import re
+nombre_seguro = re.sub(r'[^a-zA-Z0-9_.]', '', nombre_archivo_final)
+
+buffer.seek(0)
+msg.add_attachment(
+    buffer.read(),
+    maintype="application",
+    subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    filename=nombre_seguro 
+)
+
             # Enviar (Usando Gmail como ejemplo)
             with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
                 smtp.login("tu_correo@gmail.com", "tu_contraseña_de_aplicacion")
