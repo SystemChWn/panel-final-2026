@@ -215,7 +215,7 @@ with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
     matriz_construida.to_excel(writer, index=False, sheet_name="Matriz_Rondines")
 buffer.seek(0)
 fecha_archivo_str = f"{dia_seleccionado:02d}_{numero_mes:02d}_{anio_seleccionado}"
-st.sidebar.container()
+st.sidebar.markdown()
 
 # Se agregó un contenedor para asegurar el estilo del botón
 st.sidebar.markdown(
