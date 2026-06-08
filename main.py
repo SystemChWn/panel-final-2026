@@ -9,19 +9,15 @@ from streamlit_autorefresh import st_autorefresh
 st_autorefresh(interval=120000)
 
 # CONFIGURACIÓN DE PÁGINA
-st.set_page_config(
-    page_title="PANEL DE SUPERVISIÓN OPERATIVA",
-    page_icon="https://lh3.googleusercontent.com/d/1YuA-V3W27vrLeDszpzRYNJnwMKGvpHpA",
-    layout="wide"
-)
-
-# SCRIPT DE REFRESCO AUTOMÁTICO (CADA 2 MINUTOS)
-from streamlit_autorefresh import st_autorefresh
-st_autorefresh(interval=120000, key="datetimereload")
-
 st.markdown(
     """
     <style>
+    /* Reduce el margen superior de toda la aplicación */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 0rem !important;
+    }
+
     /* Estilo para los encabezados de las tablas (th) */
     div[data-testid="stDataFrame"] thead tr th {
         background-color: transparent !important;
@@ -33,6 +29,11 @@ st.markdown(
     /* Si prefieres que el texto del encabezado sea blanco si el fondo fuera oscuro */
     [data-theme="dark"] div[data-testid="stDataFrame"] thead tr th {
         color: #CCCCCC !important;
+    }
+
+    /* Opcional: Elimina el espacio extra arriba del título si aún es mucho */
+    h1 {
+        margin-top: -30px !important;
     }
     </style>
     """,
