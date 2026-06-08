@@ -348,6 +348,6 @@ st.dataframe(
 # FIRMA PROFESIONAL
 st.markdown("---")
 st.markdown(
-    '<p style="font-size: 8px; color: #aaaaaa; text-align: left; margin-top: -10px;"> Desarrollado y diseñado por: - | Auxiliar de Sistemas Computacionales • Gestión 2026</p>', 
+    '<p style="font-size: 8px; color: #aaaaaa; text-align: left; margin-top: 0px;"> Desarrollado y diseñado por: - | Auxiliar de Sistemas Computacionales • Gestión 2026</p>', 
     unsafe_allow_html=True
 )
