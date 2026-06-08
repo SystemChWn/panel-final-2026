@@ -8,7 +8,7 @@ import pytz
 from streamlit_autorefresh import st_autorefresh
 
 # 1. PRIMERO LA FUNCIÓN (Para que exista antes de usarla)
-def obtener_hora_actual():
+def obtener_hora_local():
     tz = pytz.timezone('America/Mexico_City')
     return datetime.now(tz)
 
@@ -98,7 +98,6 @@ df_raw["Hora_Corta"] = fecha_convertida.dt.strftime("%H:%M")
 # =========================================================
 def determinar_bloque_rondin(hora_texto):
     try:
-        # Esto sigue funcionando para clasificar los datos de tu Excel/Sheets
         h = int(hora_texto[:2])
         if 7 <= h < 9: return "Rondin 1 (07:00-09:00)"
         elif 9 <= h < 11: return "Rondin 2 (09:00-11:00)"
