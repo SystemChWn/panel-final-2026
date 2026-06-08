@@ -382,7 +382,7 @@ st.markdown(
 
 with st.sidebar:
     # Agrupamos todo en un contenedor para que no haya espacios extra
-    with st.container():
+    with st.sidebar:
         st.subheader("Envío de Reporte")
         
         email_destino = st.text_input("Correo electrónico destino:")
