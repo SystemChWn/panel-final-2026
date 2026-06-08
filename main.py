@@ -425,11 +425,11 @@ if (ahora.hour == 7 or ahora.hour == 19) and ahora.minute < 5:
 
 # --- INTERFAZ (SIDEBAR) ---
 with st.sidebar:
-    st.subheader("Envío de Reporte")
-    email_destino = st.text_input("Enviar reporte a:")
+    st.subheader("ENTREGA DE REPORTES")
+    email_destino = st.text_input("Correo del Destinatario:")
     
-    if st.button("Enviar Reporte"):
+    if st.button("Enviar"):
         if not email_destino:
-            st.error("Por favor, ingresa un correo electrónico.")
+            st.error("Ingresa una dirección válida para continuar.")
         else:
             enviar_email(email_destino, es_automatico=False)
