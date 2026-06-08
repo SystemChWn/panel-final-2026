@@ -12,9 +12,21 @@ def obtener_hora_actual():
     tz = pytz.timezone('America/Mexico_City')
     return datetime.now(tz)
 
-# 2. LUEGO LA LLAMAS
-ahora = obtener_hora_actual()
+# =========================================================
+# DETECCIÓN DE FECHA ACTUAL EN TIEMPO REAL
+# =========================================================
+ahora = obtener_hora_local() # Tu función de hora local
+hoy_dia = ahora.day
+hoy_mes = ahora.month
+hoy_anio = ahora.year
 hoy_hora = ahora.hour
+
+# El turno cambia automáticamente según la hora
+turno_sugerido_idx = 0 if 7 <= hoy_hora < 19 else 1
+
+# --- ESTA LÍNEA AQUÍ ES LA CLAVE ---
+# Ponla aquí, alineada a la izquierda, sin espacios antes
+rondin_actual_en_vivo = determinar_bloque_rondin(ahora.strftime("%H:%M:%S"))
 
 st_autorefresh(interval=120000)
 
