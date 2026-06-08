@@ -377,4 +377,3 @@ st.markdown(
     '<p style="font-size: 8px; color: #aaaaaa; text-align: left; margin-top: -10px;"> Desarrollado y diseñado por: Fernanda Ibarra | Auxiliar de Sistemas Computacionales • Gestión 2026</p>', 
     unsafe_allow_html=True
 )
-s
