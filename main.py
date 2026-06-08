@@ -54,19 +54,16 @@ st.markdown(
         gap: 0.20rem !important; /* Ajusta este valor si quieres más o menos espacio */
     }
     
-    /* 1. Ajuste general del Sidebar */
+    /* Forzar que el sidebar solo ocupe el alto de su contenido */
     [data-testid="stSidebar"] {
-        padding-top: 1rem !important;
+        height: auto !important;
+        min-height: auto !important;
+        overflow: hidden !important; /* Evita que aparezca el scroll */
     }
 
-    /* 2. Compacta los elementos internos (Selectboxes, Botones) */
-    [data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
-        gap: 0.2rem !important; /* Reduce el espacio entre cada filtro */
-    }
-
-    /* 3. Elimina el espacio extra al final del sidebar */
-    [data-testid="stSidebar"] div[data-testid="stSidebarContent"] {
-        padding-bottom: -10px !important;
+    /* Eliminar el espacio extra de los elementos internos */
+    [data-testid="stSidebar"] > div:first-child {
+        padding-bottom: 0px !important;
     }
     </style>
     """,
