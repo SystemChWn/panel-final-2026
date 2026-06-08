@@ -288,7 +288,7 @@ def color_semaforo_suave(val):
         return 'background-color: #F8D7DA; color: #721C24; text-align: center;'
     return 'text-align: center;'
 
-df_estilizado = matriz_construida.style.map(color_semaforo_suave, subset=columnas_rondines).map(lambda x: 'text-align: center; font-weight: bold; background-color: #F8F9FA;', subset=["TOTAL"])
+df_estilizado = matriz_construida.style.map(color_semaforo_suave, subset=columnas_rondines).map(lambda x: 'text-align: center; font-weight: bold; background-color: transparent;', subset=["TOTAL"])
 
 st.dataframe(
     df_estilizado,
