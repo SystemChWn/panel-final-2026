@@ -6,6 +6,8 @@ from io import BytesIO
 import time
 import pytz
 from streamlit_autorefresh import st_autorefresh
+import smtplib
+from email.message import EmailMessage
 
 def obtener_hora_local():
     tz = pytz.timezone('America/Mexico_City')
@@ -351,3 +353,37 @@ st.markdown(
     '<p style="font-size: 8px; color: #aaaaaa; text-align: left; margin-top: 0px;"> Desarrollado y diseñado por: - | Auxiliar de Sistemas Computacionales • Gestión 2026</p>', 
     unsafe_allow_html=True
 )
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("📧 Envío de Reporte")
+email_destino = st.sidebar.text_input("Correo electrónico:")
+
+if st.sidebar.button("Enviar Reporte por Correo"):
+    if not email_destino:
+        st.sidebar.warning("Por favor ingresa un correo.")
+    else:
+        try:
+            # Configuración del correo
+            msg = EmailMessage()
+            msg["Subject"] = f"Reporte de Rondines - {fecha_archivo_str}"
+            msg["From"] = "tu_correo@gmail.com"
+            msg["To"] = email_destino
+            msg.set_content("Adjunto encontrarás el reporte de rondines solicitado.")
+            
+            # Adjuntar el archivo Excel que ya tienes en 'buffer'
+            buffer.seek(0)
+            msg.add_attachment(
+                buffer.read(),
+                maintype="application",
+                subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                filename=f"Reporte_{fecha_archivo_str}.xlsx"
+            )
+            
+            # Enviar (Usando Gmail como ejemplo)
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+                smtp.login("tu_correo@gmail.com", "tu_contraseña_de_aplicacion")
+                smtp.send_message(msg)
+            
+            st.sidebar.success("¡Enviado exitosamente!")
+        except Exception as e:
+            st.sidebar.error(f"Error al enviar: {e}")
