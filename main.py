@@ -17,7 +17,7 @@ st.markdown(
     <style>
     /* Reduce el margen superior de toda la aplicación */
     .block-container {
-        padding-top: 2rem !important;
+        padding-top: 2.5rem !important;
         padding-bottom: 0rem !important;
         padding-right: 1rem !important;
         padding-left: 1rem !important;
