@@ -378,24 +378,20 @@ st.markdown(
 # =========================================================
 # ENVIO DE REPORTE AUTOMATICO
 # =========================================================
-# --- ESTO PONLO AL FINAL DE TU ARCHIVO ---
-
 with st.sidebar:
-# 1. Campo para el correo destino
     email_destino = st.text_input("Enviar reporte a:")
     
-    # 2. Botón de envío directo
     if st.button("Enviar Reporte"):
         if not email_destino:
-            st.error("Ingresa un correo primero.")
+            st.error("Por favor, ingresa un correo de destino.")
         else:
             try:
-                # Preparar mensaje
+                # El sistema toma automáticamente el correo y la clave de la "caja fuerte"
                 msg = EmailMessage()
                 msg["Subject"] = f"Reporte de Rondines - {fecha_archivo_str}"
                 msg["From"] = st.secrets["EMAIL_USUARIO"]
                 msg["To"] = email_destino
-                msg.set_content("Reporte adjunto.")
+                msg.set_content("Reporte generado automáticamente.")
                 
                 buffer.seek(0)
                 msg.add_attachment(
@@ -405,12 +401,11 @@ with st.sidebar:
                     filename=f"Reporte_{fecha_archivo_str}.xlsx"
                 )
                 
-                # Envío automático con credenciales guardadas
                 with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
                     smtp.login(st.secrets["EMAIL_USUARIO"], st.secrets["EMAIL_PASSWORD"])
                     smtp.send_message(msg)
                 
-                st.success("¡Enviado!")
+                st.success("¡Enviado con éxito!")
                 
             except Exception as e:
-                st.error(f"Error: {e}")
+                st.error(f"Error al enviar: {e}")
