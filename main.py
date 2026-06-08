@@ -19,47 +19,21 @@ st.set_page_config(
 from streamlit_autorefresh import st_autorefresh
 st_autorefresh(interval=120000, key="datetimereload")
 
-# CSS PERSONALIZADO
 st.markdown(
     """
     <style>
-    .block-container {
-        padding-top: 1.1rem !important;
-        padding-bottom: 0rem !important;
-    }
-    .graph-title {
-        font-size: 15px;
-        font-weight: 600;
-        margin-bottom: 5px;
-        color: inherit;
-        text-align: center;
-    }
-    .clock-value {
-        font-size: 26px;
-        font-weight: bold;
-        color: #02174F;
-        text-align: center;
-        margin-top: 25px;
-        margin-bottom: 5px;
-    }
-    .clock-sub {
-        font-size: 14px;
-        text-align: center;
-        color: #666;
-        margin-bottom: 20px;
-    }
-
-    div[data-testid="stSidebar"] {
-        background-color: #02174F !important;
+    /* Estilo para los encabezados de las tablas (th) */
+    div[data-testid="stDataFrame"] thead tr th {
+        background-color: transparent !important;
+        color: #555555 !important;
+        border-bottom: 2px solid #DDDDDD !important;
+        font-weight: bold !important;
     }
     
-    div[data-testid="stSidebar"] .stMarkdown, 
-    div[data-testid="stSidebar"] h1, 
-    div[data-testid="stSidebar"] h2,
-    div[data-testid="stSidebar"] label {
-        color: #FFFFFF !important;
+    /* Si prefieres que el texto del encabezado sea blanco si el fondo fuera oscuro */
+    [data-theme="dark"] div[data-testid="stDataFrame"] thead tr th {
+        color: #CCCCCC !important;
     }
-
     </style>
     """,
     unsafe_allow_html=True
