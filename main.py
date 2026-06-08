@@ -133,6 +133,8 @@ hoy_hora = ahora.hour
 # El turno cambia automáticamente según la hora
 turno_sugerido_idx = 0 if 7 <= hoy_hora < 19 else 1
 
+rondin_actual_en_vivo = determinar_bloque_rondin(ahora.strftime("%H:%M:%S"))
+
 # =========================================================
 # BARRA LATERAL (FILTROS)
 # =========================================================
