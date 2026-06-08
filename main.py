@@ -34,9 +34,9 @@ st.markdown(
         color: #CCCCCC !important;
     }
 
-    /* Opcional: Elimina el espacio extra arriba del título si aún es mucho */
+    /* Elimina el espacio extra arriba del título */
     h1 {
-        margin-top: -30px !important;
+        margin-top: 0px !important;
     }
     </style>
     """,
@@ -299,7 +299,7 @@ st.dataframe(
     df_estilizado,
     use_container_width=True,
     hide_index=True,
-    height=460
+    height=700
 )
 
 # =========================================================
