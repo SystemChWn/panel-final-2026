@@ -21,7 +21,7 @@ st.markdown(
         padding-bottom: 0rem !important;
         padding-right: 1rem !important;
         padding-left: 1rem !important;
-        max-width: 95% !important; /* <--- ESTO HARÁ QUE SE EXPANDA AL 95% DE LA PANTALLA */
+        max-width: 95% !important;
     }
 
     /* Estilo para los encabezados de las tablas (th) */
@@ -46,7 +46,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Creamos dos columnas pegaditas: una muy estrecha para el logo y otra para tu título original
 col_logo, col_titulo = st.columns([0.06, 0.94], gap="small")
 
 with col_logo:
@@ -101,14 +100,13 @@ def determinar_bloque_rondin(hora_texto):
 
 df_raw["Rondin_Asignado"] = df_raw["Hora_Str"].apply(determinar_bloque_rondin)
 
-# --- SEGUNDO: EJECUCIÓN (AQUÍ ES DONDE LLAMAS A LAS FUNCIONES) ---
 ahora = obtener_hora_local() 
 hoy_dia = ahora.day
 hoy_mes = ahora.month
 hoy_anio = ahora.year
 hoy_hora = ahora.hour
 
-# Esta variable ya estará disponible para todo el resto del código
+
 rondin_actual_en_vivo = determinar_bloque_rondin(ahora.strftime("%H:%M:%S"))
 
 turno_sugerido_idx = 0 if 7 <= hoy_hora < 19 else 1
@@ -159,7 +157,6 @@ else:
         "Rondin 4 (01:00-03:00)", "Rondin 5 (03:00-05:00)", "Rondin 6 (05:00-07:00)"
     ]
 
-# Llenamos las casillas con "SI" o "—"
 for col in columnas_rondines:
     matriz_construida[col] = "—"
     registros_rondin = df_filtrado_base[df_filtrado_base["Rondin_Asignado"] == col]
@@ -170,13 +167,11 @@ for col in columnas_rondines:
         elif f"Punto {pt}" in puntos_estaticos:
             matriz_construida.loc[matriz_construida["Punto_QR"] == f"Punto {pt}", col] = "SI"
 
-# Calcular porcentajes individuales por columna
 porcentajes_columnas = []
 for col in columnas_rondines:
     conteo_si = (matriz_construida[col] == "SI").sum()
     porcentajes_columnas.append(f"{(conteo_si / 44) * 100:.1f}%")
 
-# LÓGICA VINCULADA: Calcular el Porcentaje de Cumplimiento General real de la tabla
 total_celdas_tabla = matriz_construida[columnas_rondines].size
 celdas_con_si = (matriz_construida[columnas_rondines] == "SI").sum().sum()
 porcentaje_cumplimiento_general = (celdas_con_si / total_celdas_tabla) * 100 if total_celdas_tabla > 0 else 0
@@ -188,7 +183,6 @@ def calcular_acumulado_fila(fila):
 
 matriz_construida["TOTAL"] = matriz_construida.apply(calcular_acumulado_fila, axis=1)
 
-# Asegurar orden correcto de las columnas
 columnas_ordenadas = ["Punto_QR"] + columnas_rondines + ["TOTAL"]
 matriz_construida = matriz_construida[columnas_ordenadas]
 
@@ -333,7 +327,6 @@ def estilar_barra_totales(df):
 
 df_recuadro_estilizado = df_recuadro_separado.style.apply(estilar_barra_totales, axis=None)
 
-# AQUÍ ES DONDE SE ASIGNAN LOS NOMBRES NUEVOS QUE SOLICITASTE:
 configuracion_nombres_cortos = {
     "Punto_QR": st.column_config.Column(label="Col.Compl"),
     columnas_rondines[0]: st.column_config.Column(label="Rondin 1"),
@@ -345,7 +338,6 @@ configuracion_nombres_cortos = {
     "TOTAL": st.column_config.Column(label="Tab.Total")
 }
 
-# Renderizamos la tabla aplicando los nombres cortos organizados
 st.dataframe(
     df_recuadro_estilizado,
     use_container_width=True,
