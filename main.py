@@ -425,6 +425,7 @@ if (ahora.hour == 7 or ahora.hour == 19) and ahora.minute < 5:
 
 # --- INTERFAZ (SIDEBAR) ---
 with st.sidebar:
+    st.divider()
     st.subheader("ENTREGA DE REPORTES")
     email_destino = st.text_input("Correo del Destinatario:")
     
