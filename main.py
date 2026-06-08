@@ -54,16 +54,15 @@ st.markdown(
         gap: 0.20rem !important; /* Ajusta este valor si quieres más o menos espacio */
     }
     
-    /* Forzar que el sidebar solo ocupe el alto de su contenido */
-    [data-testid="stSidebar"] {
+/* Forzar al sidebar a no tener altura fija y ignorar el scroll */
+    section[data-testid="stSidebar"] {
         height: auto !important;
-        min-height: auto !important;
-        overflow: hidden !important; /* Evita que aparezca el scroll */
+        overflow: hidden !important;
     }
-
-    /* Eliminar el espacio extra de los elementos internos */
-    [data-testid="stSidebar"] > div:first-child {
-        padding-bottom: 0px !important;
+    
+    /* Esta es la clave: esto elimina el contenedor que obliga a que el sidebar sea alto */
+    [data-testid="stSidebarContent"] {
+        height: auto !important;
     }
     </style>
     """,
