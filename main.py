@@ -2,15 +2,16 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from datetime import datetime
-from io import BytesIO
 import time
+import pytz # Asegúrate de tener esto
 from streamlit_autorefresh import st_autorefresh
-import pytz
 
-def obtener_hora_local():
+# 1. PRIMERO LA FUNCIÓN (Para que exista antes de usarla)
+def obtener_hora_actual():
     tz = pytz.timezone('America/Mexico_City')
     return datetime.now(tz)
 
+# 2. LUEGO LA LLAMAS
 ahora = obtener_hora_actual()
 hoy_hora = ahora.hour
 
