@@ -381,9 +381,6 @@ st.markdown(
 # --- ESTO PONLO AL FINAL DE TU ARCHIVO ---
 
 with st.sidebar:
-    # Agrupamos todo en un contenedor para que no haya espacios extra
-    with st.sidebar:
-        st.subheader("Envío de Reporte")
         
         email_destino = st.text_input("Correo electrónico destino:")
         password_autorizacion = st.text_input("Contraseña autorizada:", type="password")
