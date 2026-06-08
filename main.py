@@ -11,24 +11,8 @@ from streamlit_autorefresh import st_autorefresh
 def obtener_hora_local():
     tz = pytz.timezone('America/Mexico_City')
     return datetime.now(tz)
-
-# =========================================================
-# DETECCIÓN DE FECHA ACTUAL EN TIEMPO REAL
-# =========================================================
-# 1. Asegúrate de que esta línea esté aquí, después de haber definido 'obtener_hora_local()' arriba
-ahora = obtener_hora_local() 
-
-# 2. MANTÉN ESTO (No lo borres, es vital para tus filtros)
-hoy_dia = ahora.day
-hoy_mes = ahora.month
-hoy_anio = ahora.year
-hoy_hora = ahora.hour
-
-# 4. El turno cambia automáticamente según la hora
-turno_sugerido_idx = 0 if 7 <= hoy_hora < 19 else 1
-
+    
 st_autorefresh(interval=120000)
-
 # CONFIGURACIÓN DE PÁGINA
 st.markdown(
     """
@@ -127,6 +111,10 @@ hoy_hora = ahora.hour
 
 # El turno cambia automáticamente según la hora
 turno_sugerido_idx = 0 if 7 <= hoy_hora < 19 else 1
+
+st.sidebar.write(f"Hora real detectada: {ahora.strftime('%H:%M:%S')}")
+st.sidebar.write(f"Hora extraída para cálculo (h): {ahora.hour}")
+st.sidebar.write(f"Rondín resultante: {rondin_actual_en_vivo}")
 
 rondin_actual_en_vivo = determinar_bloque_rondin(ahora.strftime("%H:%M:%S"))
 
