@@ -378,34 +378,58 @@ st.markdown(
 # =========================================================
 # ENVIO DE REPORTE AUTOMATICO
 # =========================================================
+if 'correo_enviado' not in st.session_state:
+    st.session_state.correo_enviado = None
+
+# --- FUNCIÓN DE ENVÍO ---
+def enviar_email(destino, es_automatico=False):
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = f"Reporte de Rondines - {fecha_archivo_str}"
+        msg["From"] = st.secrets["EMAIL_USUARIO"]
+        msg["To"] = destino
+        msg.set_content("Adjunto encontrarás el reporte solicitado.")
+        
+        buffer.seek(0)
+        msg.add_attachment(
+            buffer.read(),
+            maintype="application",
+            subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            filename=f"Reporte_{fecha_archivo_str}_{turno_seleccionado}.xlsx"
+        )
+        
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(st.secrets["EMAIL_USUARIO"], st.secrets["EMAIL_PASSWORD"])
+            smtp.send_message(msg)
+        
+        # Mensajes personalizados
+        if es_automatico:
+            st.sidebar.success("Reporte enviado automáticamente")
+        else:
+            st.sidebar.success("Enviado correctamente")
+            
+    except Exception as e:
+        st.sidebar.error(f"Error al enviar: {e}")
+
+# --- LÓGICA AUTOMÁTICA (CHECKPOINT) ---
+ahora = datetime.now()
+# Si son las 07:00 o 19:00 (rango de 5 minutos)
+if (ahora.hour == 7 or ahora.hour == 19) and ahora.minute < 5:
+    fecha_hoy = ahora.strftime("%Y-%m-%d")
+    id_envio = f"{fecha_hoy}-{ahora.hour}"
+    
+    # Solo envía si no se ha enviado en este turno hoy
+    if st.session_state.correo_enviado != id_envio:
+        enviar_email(destino="correo_jefe@empresa.com", es_automatico=True)
+        st.session_state.correo_enviado = id_envio
+
+# --- INTERFAZ (SIDEBAR) ---
 with st.sidebar:
+    st.subheader("Envío de Reporte")
     email_destino = st.text_input("Enviar reporte a:")
     
     if st.button("Enviar Reporte"):
         if not email_destino:
-            st.error("Por favor, ingresa un correo de destino.")
+            st.error("Por favor, ingresa un correo electrónico.")
         else:
-            try:
-                # El sistema toma automáticamente el correo y la clave de la "caja fuerte"
-                msg = EmailMessage()
-                msg["Subject"] = f"Reporte de Rondines - {fecha_archivo_str}"
-                msg["From"] = st.secrets["EMAIL_USUARIO"]
-                msg["To"] = email_destino
-                msg.set_content("Reporte generado automáticamente.")
-                
-                buffer.seek(0)
-                msg.add_attachment(
-                    buffer.read(),
-                    maintype="application",
-                    subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    filename=f"Reporte_{fecha_archivo_str}.xlsx"
-                )
-                
-                with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-                    smtp.login(st.secrets["EMAIL_USUARIO"], st.secrets["EMAIL_PASSWORD"])
-                    smtp.send_message(msg)
-                
-                st.success("¡Enviado con éxito!")
-                
-            except Exception as e:
-                st.error(f"Error al enviar: {e}")
+            enviar_email(email_destino, es_automatico=False)
