@@ -381,7 +381,7 @@ st.markdown(
 # --- ESTO PONLO AL FINAL DE TU ARCHIVO ---
 
 with st.sidebar:
-    st.markdown()
+    st.st.container()
     st.subheader("Envío de Reporte")
     
     # Campo para el correo (siempre visible)
