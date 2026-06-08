@@ -412,13 +412,12 @@ def enviar_email(destino, es_automatico=False):
         st.sidebar.error(f"Error al enviar: {e}")
 
 # --- LÓGICA AUTOMÁTICA (CHECKPOINT) ---
-ahora = datetime.now()
-# Si son las 07:00 o 19:00 (rango de 5 minutos)
+ahora = obtener_hora_local() 
+
 if (ahora.hour == 7 or ahora.hour == 19) and ahora.minute < 5:
     fecha_hoy = ahora.strftime("%Y-%m-%d")
     id_envio = f"{fecha_hoy}-{ahora.hour}"
     
-    # Solo envía si no se ha enviado en este turno hoy
     if st.session_state.correo_enviado != id_envio:
         enviar_email(destino="ana.fernanda.ibarra03@gmail.com", es_automatico=True)
         st.session_state.correo_enviado = id_envio
