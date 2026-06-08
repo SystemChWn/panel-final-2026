@@ -199,7 +199,14 @@ total_celdas_tabla = matriz_construida[columnas_rondines].size
 celdas_con_si = (matriz_construida[columnas_rondines] == "SI").sum().sum()
 porcentaje_cumplimiento_general = (celdas_con_si / total_celdas_tabla) * 100 if total_celdas_tabla > 0 else 0
 
-# Cambia esta parte en tu código:
+def color_semaforo_suave(val):
+    v = str(val).strip()
+    if v == "SI":
+        return 'background-color: #D4EDDA; color: #155724; font-weight: bold; text-align: center;'
+    elif v == "—":
+        return 'background-color: #F8D7DA; color: #721C24; text-align: center;'
+    return 'text-align: center;'
+    
 df_estilizado = matriz_construida.style.map(color_semaforo_suave, subset=columnas_rondines)
 df_estilizado = df_estilizado.map(
     lambda x: 'text-align: center; font-weight: bold; background-color: #F8F9FA; color: #000000;', 
