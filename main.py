@@ -17,8 +17,10 @@ st.markdown(
     <style>
     /* Reduce el margen superior de toda la aplicación */
     .block-container {
-        padding-top: 3rem !important;
-        padding-bottom: 0rem !important;
+        padding-top: 1rem !important;
+        padding-right: 1rem !important;
+        padding-left: 1rem !important;
+        max-width: 95% !important; /* <--- ESTO HARÁ QUE SE EXPANDA AL 95% DE LA PANTALLA */
     }
 
     /* Estilo para los encabezados de las tablas (th) */
