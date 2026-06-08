@@ -2,8 +2,9 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from datetime import datetime
+from io import BytesIO
 import time
-import pytz # Asegúrate de tener esto
+import pytz
 from streamlit_autorefresh import st_autorefresh
 
 # 1. PRIMERO LA FUNCIÓN (Para que exista antes de usarla)
