@@ -286,19 +286,17 @@ with dash_col2:
     hora_actual_sistema = datetime.now().strftime("%H:%M:%S")
     rondin_calculado = determinar_bloque_rondin(hora_actual_sistema)
     
-    if rondin_calculado in columnas_rondines:
-        rondin_a_mostrar = rondin_calculado
-    else:
-        rondin_a_mostrar = columnas_rondines[0]
+    rondin_a_mostrar = rondin_calculado if rondin_calculado in columnas_rondines else columnas_rondines[0]
         
     puntos_completados_ahora = (matriz_construida[rondin_a_mostrar] == "SI").sum()
     porcentaje_barra = puntos_completados_ahora / 44
     
-    st.markdown(f'<p class="clock-value" style="font-size: 20px; color: #114D7D; margin-top: 15px;">TURNO: {turno_seleccionado}</p>', unsafe_allow_html=True)
-    st.markdown(f'<p class="graph-title" style="font-size: 18px; font-weight: bold; color: #333;">{rondin_a_mostrar}</p>', unsafe_allow_html=True)
-    st.markdown(f'<p class="clock-sub">Progreso: {puntos_completados_ahora} de 44 puntos escaneados</p>', unsafe_allow_html=True)
+    # He eliminado los colores fijos (color: #...) para que hereden el color del tema actual
+    st.markdown(f'<p style="font-size: 20px; font-weight: bold; margin-top: 15px;">TURNO: {turno_seleccionado}</p>', unsafe_allow_html=True)
+    st.markdown(f'<p style="font-size: 18px; font-weight: bold;">{rondin_a_mostrar}</p>', unsafe_allow_html=True)
+    st.markdown(f'<p>Progreso: {puntos_completados_ahora} de 44 puntos escaneados</p>', unsafe_allow_html=True)
+    
     st.progress(float(porcentaje_barra))
-
 # =========================================================
 # 1. MATRIZ VISUAL PRINCIPAL (TABLA SUPERIOR)
 # =========================================================
