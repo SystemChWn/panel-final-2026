@@ -378,31 +378,28 @@ st.markdown(
 # =========================================================
 # ENVIO DE REPORTE AUTOMATICO
 # =========================================================
-# 1. Definimos el nombre del archivo
-nombre_archivo_final = f"Reporte_{fecha_archivo_str}_{turno_seleccionado}.xlsx"
-# Filtro de seguridad para evitar caracteres especiales
-nombre_seguro = re.sub(r'[^a-zA-Z0-9_.]', '', nombre_archivo_final)
-
-# 2. Preparamos el correo
-msg = EmailMessage()
-msg["Subject"] = f"Reporte de Rondines - {fecha_archivo_str}"
-msg["From"] = st.secrets["EMAIL_USUARIO"]
-msg["To"] = email_destino # Asegúrate de que esta variable tenga el correo al que vas a enviar
-msg.set_content("Adjunto encontrarás el reporte de rondines solicitado.")
-
-buffer.seek(0)
-msg.add_attachment(
-    buffer.read(),
-    maintype="application",
-    subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    filename=nombre_seguro 
-)
-
-# 3. Enviamos usando los secretos
-try:
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login(st.secrets["EMAIL_USUARIO"], st.secrets["EMAIL_PASSWORD"])
-        smtp.send_message(msg)
-    st.sidebar.success("¡Enviado exitosamente!")
-except Exception as e:
-    st.sidebar.error(f"Error al enviar: {e}")
+with st.sidebar:
+    st.subheader("Configuración de Envío")
+    
+    # El usuario pone a quién se envía
+    email_destino = st.text_input("Enviar reporte a:")
+    
+    # El usuario pone la contraseña que TÚ les diste (esta no se guarda, solo se usa al momento)
+    password_usuario = st.text_input("Contraseña de autorización:", type="password")
+    
+    if st.button("Enviar Reporte"):
+        if not email_destino or not password_usuario:
+            st.error("Por favor, ingresa el correo y la contraseña autorizada.")
+        else:
+            try:
+                # Aquí usamos la contraseña que ellos escribieron en el momento
+                # Nota: EMAIL_USUARIO sí puede ir en secrets porque es tu cuenta
+                with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+                    smtp.login(st.secrets["EMAIL_USUARIO"], password_usuario)
+                    
+                    # ... resto de la lógica de envío (msg, add_attachment, etc.) ...
+                    
+                    smtp.send_message(msg)
+                st.success(f"Enviado correctamente a {email_destino}")
+            except Exception as e:
+                st.error("Error: Verifica que la contraseña sea correcta.")
