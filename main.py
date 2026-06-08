@@ -304,7 +304,7 @@ with dash_col2:
 # =========================================================
 st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 fecha_pantalla_str = f"{dia_seleccionado:02d}/{numero_mes:02d}/{anio_seleccionado}"
-st.subheader(f"MATRIZ DE CONTROL DE RONDINES ({turno_seleccionado}) — FECHA: {fecha_pantalla_str}")
+st.subheader(f"CONTROL DE RONDINES ({turno_seleccionado}) — FECHA: {fecha_pantalla_str}")
 
 def color_semaforo_suave(val):
     v = str(val).strip()
@@ -351,7 +351,7 @@ def estilar_barra_totales(df):
 
 df_recuadro_estilizado = df_recuadro_separado.style.apply(estilar_barra_totales, axis=None)
 
-# AQUÍ ES DONDE SE ASIGNAN LOS NOMBRES NUEVOS QUE SOLICITASTE:
+# TABLA DE PORCENTAJES:
 configuracion_nombres_cortos = {
     "Punto_QR": st.column_config.Column(label="Col.Compl"),
     columnas_rondines[0]: st.column_config.Column(label="Rondin 1"),
@@ -363,7 +363,7 @@ configuracion_nombres_cortos = {
     "TOTAL": st.column_config.Column(label="Tab.Total")
 }
 
-# Renderizamos la tabla aplicando los nombres cortos organizados
+# Renderizamos la tabla
 st.dataframe(
     df_recuadro_estilizado,
     use_container_width=True,
