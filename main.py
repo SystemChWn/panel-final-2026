@@ -46,12 +46,12 @@ st.markdown(
 
     /* Esto sube los filtros al máximo posible en la barra lateral */
     [data-testid="stSidebar"] section {
-        padding-top: 0rem !important;
+        padding-top: -10rem !important;
     }
     
     /* Esto elimina el margen superior de los widgets (selectbox) */
     [data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
-        gap: 0.5rem !important; /* Ajusta este valor si quieres más o menos espacio */
+        gap: 0.10rem !important; /* Ajusta este valor si quieres más o menos espacio */
     }
     </style>
     """,
