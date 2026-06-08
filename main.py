@@ -25,7 +25,7 @@ hoy_anio = ahora.year
 hoy_hora = ahora.hour
 
 # 3. Y añade justo debajo, para que la variable esté disponible para tus gráficas:
-rondin_actual_en_vivo = determinar_bloque_rondin(ahora.strftime("%H:%M:%S"))
+
 st.sidebar.write(f"Hora actual detectada: {ahora.strftime('%H:%M:%S')}")
 st.sidebar.write(f"Rondín en curso: {rondin_actual_en_vivo}")
 
