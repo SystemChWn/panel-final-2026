@@ -199,19 +199,13 @@ total_celdas_tabla = matriz_construida[columnas_rondines].size
 celdas_con_si = (matriz_construida[columnas_rondines] == "SI").sum().sum()
 porcentaje_cumplimiento_general = (celdas_con_si / total_celdas_tabla) * 100 if total_celdas_tabla > 0 else 0
 
-def color_semaforo_suave(val):
-    v = str(val).strip()
-    if v == "SI":
-        return 'background-color: #D4EDDA; color: #155724; font-weight: bold; text-align: center;'
-    elif v == "—":
-        return 'background-color: #F8D7DA; color: #721C24; text-align: center;'
-    return 'text-align: center;'
-    
-df_estilizado = matriz_construida.style.map(color_semaforo_suave, subset=columnas_rondines)
-df_estilizado = df_estilizado.map(
-    lambda x: 'text-align: center; font-weight: bold; background-color: #F8F9FA; color: #000000;', 
-    subset=["TOTAL"]
-)
+# Calcular columna TOTAL (X/6) para cada renglón
+def calcular_acumulado_fila(fila):
+    completados = (fila[columnas_rondines] == "SI").sum()
+    return f"{completados}/6"
+
+matriz_construida["TOTAL"] = matriz_construida.apply(calcular_acumulado_fila, axis=1)
+
 # Asegurar orden correcto de las columnas
 columnas_ordenadas = ["Punto_QR"] + columnas_rondines + ["TOTAL"]
 matriz_construida = matriz_construida[columnas_ordenadas]
@@ -292,26 +286,26 @@ with dash_col2:
     hora_actual_sistema = datetime.now().strftime("%H:%M:%S")
     rondin_calculado = determinar_bloque_rondin(hora_actual_sistema)
     
-    rondin_a_mostrar = rondin_calculado if rondin_calculado in columnas_rondines else columnas_rondines[0]
+    if rondin_calculado in columnas_rondines:
+        rondin_a_mostrar = rondin_calculado
+    else:
+        rondin_a_mostrar = columnas_rondines[0]
         
     puntos_completados_ahora = (matriz_construida[rondin_a_mostrar] == "SI").sum()
     porcentaje_barra = puntos_completados_ahora / 44
     
-    # He eliminado los colores fijos (color: #...) para que hereden el color del tema actual
-    st.markdown(f'<p style="font-size: 20px; font-weight: bold; margin-top: 15px;">TURNO: {turno_seleccionado}</p>', unsafe_allow_html=True)
-    st.markdown(f'<p style="font-size: 18px; font-weight: bold;">{rondin_a_mostrar}</p>', unsafe_allow_html=True)
-    st.markdown(f'<p>Progreso: {puntos_completados_ahora} de 44 puntos escaneados</p>', unsafe_allow_html=True)
-    
+    st.markdown(f'<p class="clock-value" style="font-size: 20px; color: #114D7D; margin-top: 15px;">TURNO: {turno_seleccionado}</p>', unsafe_allow_html=True)
+    st.markdown(f'<p class="graph-title" style="font-size: 18px; font-weight: bold; color: #333;">{rondin_a_mostrar}</p>', unsafe_allow_html=True)
+    st.markdown(f'<p class="clock-sub">Progreso: {puntos_completados_ahora} de 44 puntos escaneados</p>', unsafe_allow_html=True)
     st.progress(float(porcentaje_barra))
+
 # =========================================================
 # 1. MATRIZ VISUAL PRINCIPAL (TABLA SUPERIOR)
 # =========================================================
 st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 fecha_pantalla_str = f"{dia_seleccionado:02d}/{numero_mes:02d}/{anio_seleccionado}"
-st.subheader(f"CONTROL DE RONDINES ({turno_seleccionado}) — FECHA: {fecha_pantalla_str}")
+st.subheader(f"MATRIZ DE CONTROL DE RONDINES ({turno_seleccionado}) — FECHA: {fecha_pantalla_str}")
 
-# --- PASO 1: DEFINICIÓN (Debe ir antes de usarse) ---
-# --- 1. DEFINICIÓN SEGURA (Asegúrate de que esto esté arriba) ---
 def color_semaforo_suave(val):
     v = str(val).strip()
     if v == "SI":
@@ -320,11 +314,7 @@ def color_semaforo_suave(val):
         return 'background-color: #F8D7DA; color: #721C24; text-align: center;'
     return 'text-align: center;'
 
-# --- PASO 2: USO (Esto debe ir después de la definición) ---
-df_estilizado = matriz_construida.style.map(color_semaforo_suave, subset=columnas_rondines).map(
-    lambda x: 'text-align: center; font-weight: bold; background-color: #F8F9FA; color: #000000;', 
-    subset=["TOTAL"]
-)
+df_estilizado = matriz_construida.style.map(color_semaforo_suave, subset=columnas_rondines).map(lambda x: 'text-align: center; font-weight: bold; background-color: #F8F9FA;', subset=["TOTAL"])
 
 st.dataframe(
     df_estilizado,
@@ -354,15 +344,14 @@ df_recuadro_separado = df_recuadro_separado[columnas_ordenadas]
 def estilar_barra_totales(df):
     estilos = pd.DataFrame('', index=df.index, columns=df.columns)
     estilos["Punto_QR"] = 'background-color: #E9ECEF; color: #212529; font-weight: bold; text-align: center;'
-    # Aseguramos que TOTAL siempre se vea bien
-    estilos["TOTAL"] = 'background-color: #155724; color: #FFFFFF !important; font-weight: bold; text-align: center;'
+    estilos["TOTAL"] = 'background-color: #155724; color: white; font-weight: bold; text-align: center;'
     for col in columnas_rondines:
         estilos[col] = 'background-color: #C3E6CB; color: #155724; font-weight: bold; text-align: center;'
     return estilos
 
 df_recuadro_estilizado = df_recuadro_separado.style.apply(estilar_barra_totales, axis=None)
 
-# TABLA DE PORCENTAJES:
+# AQUÍ ES DONDE SE ASIGNAN LOS NOMBRES NUEVOS QUE SOLICITASTE:
 configuracion_nombres_cortos = {
     "Punto_QR": st.column_config.Column(label="Col.Compl"),
     columnas_rondines[0]: st.column_config.Column(label="Rondin 1"),
@@ -374,7 +363,7 @@ configuracion_nombres_cortos = {
     "TOTAL": st.column_config.Column(label="Tab.Total")
 }
 
-# Renderizamos la tabla
+# Renderizamos la tabla aplicando los nombres cortos organizados
 st.dataframe(
     df_recuadro_estilizado,
     use_container_width=True,
@@ -388,3 +377,4 @@ st.markdown(
     '<p style="font-size: 8px; color: #aaaaaa; text-align: left; margin-top: -10px;"> Desarrollado y diseñado por: Fernanda Ibarra | Auxiliar de Sistemas Computacionales • Gestión 2026</p>', 
     unsafe_allow_html=True
 )
+s
