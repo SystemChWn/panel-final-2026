@@ -199,12 +199,13 @@ total_celdas_tabla = matriz_construida[columnas_rondines].size
 celdas_con_si = (matriz_construida[columnas_rondines] == "SI").sum().sum()
 porcentaje_cumplimiento_general = (celdas_con_si / total_celdas_tabla) * 100 if total_celdas_tabla > 0 else 0
 
-# Calcular columna TOTAL (X/6) para cada renglón
-def calcular_acumulado_fila(fila):
-    completados = (fila[columnas_rondines] == "SI").sum()
-    return f"{completados}/6"
-
-matriz_construida["TOTAL"] = matriz_construida.apply(calcular_acumulado_fila, axis=1)
+# Cambia esta parte en tu código:
+df_estilizado = matriz_construida.style.map(
+    color_semaforo_suave, subset=columnas_rondines
+).map(
+    lambda x: 'text-align: center; font-weight: bold; background-color: #F8F9FA; color: #000000;', 
+    subset=["TOTAL"]
+)
 
 # Asegurar orden correcto de las columnas
 columnas_ordenadas = ["Punto_QR"] + columnas_rondines + ["TOTAL"]
