@@ -7,12 +7,10 @@ import time
 import pytz
 from streamlit_autorefresh import st_autorefresh
 
-# 1. PRIMERO LA FUNCIÓN (Para que exista antes de usarla)
 def obtener_hora_local():
     tz = pytz.timezone('America/Mexico_City')
     return datetime.now(tz)
     
-st_autorefresh(interval=120000)
 # CONFIGURACIÓN DE PÁGINA
 st.markdown(
     """
@@ -100,23 +98,18 @@ def determinar_bloque_rondin(hora_texto):
 
 df_raw["Rondin_Asignado"] = df_raw["Hora_Str"].apply(determinar_bloque_rondin)
 
-# =========================================================
-# DETECCIÓN DE FECHA ACTUAL EN TIEMPO REAL
-# =========================================================
-ahora = datetime.now()
+# --- SEGUNDO: EJECUCIÓN (AQUÍ ES DONDE LLAMAS A LAS FUNCIONES) ---
+ahora = obtener_hora_local() 
 hoy_dia = ahora.day
 hoy_mes = ahora.month
 hoy_anio = ahora.year
 hoy_hora = ahora.hour
 
-# El turno cambia automáticamente según la hora
-turno_sugerido_idx = 0 if 7 <= hoy_hora < 19 else 1
-
-st.sidebar.write(f"Hora real detectada: {ahora.strftime('%H:%M:%S')}")
-st.sidebar.write(f"Hora extraída para cálculo (h): {ahora.hour}")
-st.sidebar.write(f"Rondín resultante: {rondin_actual_en_vivo}")
-
+# Esta variable ya estará disponible para todo el resto del código
 rondin_actual_en_vivo = determinar_bloque_rondin(ahora.strftime("%H:%M:%S"))
+
+turno_sugerido_idx = 0 if 7 <= hoy_hora < 19 else 1
+st_autorefresh(interval=120000)
 
 # =========================================================
 # BARRA LATERAL (FILTROS)
