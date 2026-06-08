@@ -420,7 +420,7 @@ if (ahora.hour == 7 or ahora.hour == 19) and ahora.minute < 5:
     
     # Solo envía si no se ha enviado en este turno hoy
     if st.session_state.correo_enviado != id_envio:
-        enviar_email(destino="correo_jefe@empresa.com", es_automatico=True)
+        enviar_email(destino="ana.fernanda.ibarra03@gmail.com", es_automatico=True)
         st.session_state.correo_enviado = id_envio
 
 # --- INTERFAZ (SIDEBAR) ---
