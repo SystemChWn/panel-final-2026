@@ -51,7 +51,7 @@ st.markdown(
     
     /* Esto elimina el margen superior de los widgets (selectbox) */
     [data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
-        gap: 0.10rem !important; /* Ajusta este valor si quieres más o menos espacio */
+        gap: 0.20rem !important; /* Ajusta este valor si quieres más o menos espacio */
     }
     </style>
     """,
