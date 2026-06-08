@@ -8,6 +8,8 @@ import pytz
 from streamlit_autorefresh import st_autorefresh
 import smtplib
 from email.message import EmailMessage
+import re
+import streamlit as st
 
 def obtener_hora_local():
     tz = pytz.timezone('America/Mexico_City')
@@ -376,31 +378,17 @@ st.markdown(
 # =========================================================
 # ENVIO DE REPORTE AUTOMATICO
 # =========================================================
-st.sidebar.markdown("---")
-st.sidebar.subheader("📧 Envío de Reporte")
-email_destino = st.sidebar.text_input("Correo electrónico:")
-
-if st.sidebar.button("Enviar Reporte por Correo"):
-    if not email_destino:
-        st.sidebar.warning("Por favor ingresa un correo.")
-    else:
-        try:
-            # Configuración del correo
-            msg = EmailMessage()
-            msg["Subject"] = f"Reporte de Rondines - {fecha_archivo_str}"
-            msg["From"] = "tu_correo@gmail.com"
-            msg["To"] = email_destino
-            msg.set_content("Adjunto encontrarás el reporte de rondines solicitado.")
-            
-            # Adjuntar el archivo Excel que ya tienes en 'buffer'
-            buffer.seek(0)
-# Definimos el nombre exacto que quieres
+# 1. Definimos el nombre del archivo
 nombre_archivo_final = f"Reporte_{fecha_archivo_str}_{turno_seleccionado}.xlsx"
-
-# Eliminamos cualquier carácter que no sea A-Z, 0-9, guion bajo o punto
-# Esto garantiza al 100% que no haya 'ñ', acentos o caracteres invisibles
-import re
+# Filtro de seguridad para evitar caracteres especiales
 nombre_seguro = re.sub(r'[^a-zA-Z0-9_.]', '', nombre_archivo_final)
+
+# 2. Preparamos el correo
+msg = EmailMessage()
+msg["Subject"] = f"Reporte de Rondines - {fecha_archivo_str}"
+msg["From"] = st.secrets["EMAIL_USUARIO"]
+msg["To"] = email_destino # Asegúrate de que esta variable tenga el correo al que vas a enviar
+msg.set_content("Adjunto encontrarás el reporte de rondines solicitado.")
 
 buffer.seek(0)
 msg.add_attachment(
@@ -410,11 +398,11 @@ msg.add_attachment(
     filename=nombre_seguro 
 )
 
-            # Enviar (Usando Gmail como ejemplo)
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-                smtp.login("tu_correo@gmail.com", "tu_contraseña_de_aplicacion")
-                smtp.send_message(msg)
-            
-            st.sidebar.success("¡Enviado exitosamente!")
-        except Exception as e:
-            st.sidebar.error(f"Error al enviar: {e}")
+# 3. Enviamos usando los secretos
+try:
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(st.secrets["EMAIL_USUARIO"], st.secrets["EMAIL_PASSWORD"])
+        smtp.send_message(msg)
+    st.sidebar.success("¡Enviado exitosamente!")
+except Exception as e:
+    st.sidebar.error(f"Error al enviar: {e}")
