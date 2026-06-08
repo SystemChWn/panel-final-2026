@@ -43,6 +43,16 @@ st.markdown(
     h1 {
         margin-top: 0px !important;
     }
+
+    /* Esto sube los filtros al máximo posible en la barra lateral */
+    [data-testid="stSidebar"] section {
+        padding-top: 0rem !important;
+    }
+    
+    /* Esto elimina el margen superior de los widgets (selectbox) */
+    [data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
+        gap: 0.5rem !important; /* Ajusta este valor si quieres más o menos espacio */
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -115,10 +125,8 @@ turno_sugerido_idx = 0 if 7 <= hoy_hora < 19 else 1
 st_autorefresh(interval=120000)
 
 # =========================================================
-# BARRA LATERAL (FILTROS)
+# BARRA LATERAL (FILTROS DE BUSQUEDA)
 # =========================================================
-st.sidebar.header("Filtros de Búsqueda")
-
 anios_opciones = [2026, 2027, 2028, 2029, 2030]
 meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 dias_opciones = list(range(1, 32))
