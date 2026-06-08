@@ -53,6 +53,21 @@ st.markdown(
     [data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
         gap: 0.20rem !important; /* Ajusta este valor si quieres más o menos espacio */
     }
+    
+    /* 1. Ajuste general del Sidebar */
+    [data-testid="stSidebar"] {
+        padding-top: 1rem !important;
+    }
+
+    /* 2. Compacta los elementos internos (Selectboxes, Botones) */
+    [data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
+        gap: 0.2rem !important; /* Reduce el espacio entre cada filtro */
+    }
+
+    /* 3. Elimina el espacio extra al final del sidebar */
+    [data-testid="stSidebar"] div[data-testid="stSidebarContent"] {
+        padding-bottom: 0px !important;
+    }
     </style>
     """,
     unsafe_allow_html=True
