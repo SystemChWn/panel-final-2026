@@ -351,11 +351,6 @@ df_estilizado = (
         lambda x: 'text-align: center; font-weight: bold; background-color: transparent;',
         subset=["TOTAL"]
     )
-    .set_tooltips(
-    matriz_comentarios.set_index(matriz_construida.index)
-    )
-
-
 )
 
 st.dataframe(
