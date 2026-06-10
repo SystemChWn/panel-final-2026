@@ -62,7 +62,6 @@ st.markdown(
         overflow: hidden !important;
     }
     
-    /* Esta es la clave: esto elimina el contenedor que obliga a que el sidebar sea alto */
     [data-testid="stSidebarContent"] {
         height: auto !important;
     }
@@ -92,6 +91,7 @@ except Exception as e:
 
 # LIMPIEZA Y CONVERSIÓN DE FECHAS/HORAS
 df_raw = df_raw.fillna("")
+st.write(df_raw.columns.tolist())
 df_raw["Punto_QR"] = df_raw["Punto_QR"].astype(str).str.replace(".0", "", regex=False).str.strip()
 
 fecha_convertida = pd.to_datetime(df_raw["Fecha_Hora"], errors="coerce", dayfirst=True)
@@ -167,7 +167,9 @@ df_filtrado_base = df_raw[
 # CONSTRUCCIÓN DE LA MATRIZ DE 44 PUNTOS
 # =========================================================
 puntos_estaticos = [f"Punto {i}" for i in range(1, 45)]
-matriz_construida = pd.DataFrame({"Punto_QR": puntos_estaticos})
+matriz_comentarios = pd.DataFrame({"Punto_QR": puntos_estaticos})
+for col in columnas_rondines:
+    matriz_comentarios[col] = ""
 
 if turno_seleccionado == "DIA":
     columnas_rondines = [
@@ -182,13 +184,31 @@ else:
 
 for col in columnas_rondines:
     matriz_construida[col] = "—"
-    registros_rondin = df_filtrado_base[df_filtrado_base["Rondin_Asignado"] == col]
+    registros_rondin = df_filtrado_base[
+        df_filtrado_base["Rondin_Asignado"] == col
+    ]
+
     for _, fila_reg in registros_rondin.iterrows():
         pt = fila_reg["Punto_QR"]
+        comentario = str(fila_reg.get("Comentarios", "")).strip()
+
         if pt in puntos_estaticos:
-            matriz_construida.loc[matriz_construida["Punto_QR"] == pt, col] = "SI"
+            matriz_construida.loc[
+                matriz_construida["Punto_QR"] == pt, col
+            ] = "SI"
+
+            matriz_comentarios.loc[
+                matriz_comentarios["Punto_QR"] == pt, col
+            ] = comentario
+
         elif f"Punto {pt}" in puntos_estaticos:
-            matriz_construida.loc[matriz_construida["Punto_QR"] == f"Punto {pt}", col] = "SI"
+            matriz_construida.loc[
+                matriz_construida["Punto_QR"] == f"Punto {pt}", col
+            ] = "SI"
+
+            matriz_comentarios.loc[
+                matriz_comentarios["Punto_QR"] == f"Punto {pt}", col
+            ] = comentario
 
 porcentajes_columnas = []
 for col in columnas_rondines:
@@ -313,7 +333,19 @@ def color_semaforo_suave(val):
         return 'background-color: #F8D7DA; color: #721C24; text-align: center;'
     return 'text-align: center;'
 
-df_estilizado = matriz_construida.style.map(color_semaforo_suave, subset=columnas_rondines).map(lambda x: 'text-align: center; font-weight: bold; background-color: transparent;', subset=["TOTAL"])
+df_estilizado = (
+    matriz_construida.style
+    .map(color_semaforo_suave, subset=columnas_rondines)
+    .map(
+        lambda x: 'text-align: center; font-weight: bold; background-color: transparent;',
+        subset=["TOTAL"]
+    )
+    .set_tooltips(
+    matriz_comentarios.set_index(matriz_construida.index)
+    )
+
+
+)
 
 st.dataframe(
     df_estilizado,
