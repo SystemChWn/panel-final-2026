@@ -91,7 +91,7 @@ except Exception as e:
 
 # LIMPIEZA Y CONVERSIÓN DE FECHAS/HORAS
 df_raw = df_raw.fillna("")
-
+st.write(df_raw.columns.tolist())
 df_raw["Punto_QR"] = df_raw["Punto_QR"].astype(str).str.replace(".0", "", regex=False).str.strip()
 
 fecha_convertida = pd.to_datetime(df_raw["Fecha_Hora"], errors="coerce", dayfirst=True)
