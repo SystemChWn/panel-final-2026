@@ -167,6 +167,7 @@ df_filtrado_base = df_raw[
 # CONSTRUCCIÓN DE LA MATRIZ DE 44 PUNTOS
 # =========================================================
 puntos_estaticos = [f"Punto {i}" for i in range(1, 45)]
+matriz_construida = pd.DataFrame({"Punto_QR": puntos_estaticos})
 matriz_comentarios = pd.DataFrame({"Punto_QR": puntos_estaticos})
 
 if turno_seleccionado == "DIA":
@@ -180,14 +181,19 @@ else:
         "Rondin 4 (01:00-03:00)", "Rondin 5 (03:00-05:00)", "Rondin 6 (05:00-07:00)"
     ]
 
+# Inicializar columnas de la matriz principal
 for col in columnas_rondines:
     matriz_construida[col] = "—"
+
+# Inicializar matriz de comentarios
+for col in columnas_rondines:
+    matriz_comentarios[col] = ""
+
+# Llenar matrices
+for col in columnas_rondines:
     registros_rondin = df_filtrado_base[
         df_filtrado_base["Rondin_Asignado"] == col
     ]
-
-for col in columnas_rondines:
-    matriz_comentarios[col] = ""
 
     for _, fila_reg in registros_rondin.iterrows():
         pt = fila_reg["Punto_QR"]
@@ -195,22 +201,26 @@ for col in columnas_rondines:
 
         if pt in puntos_estaticos:
             matriz_construida.loc[
-                matriz_construida["Punto_QR"] == pt, col
+                matriz_construida["Punto_QR"] == pt,
+                col
             ] = "SI"
 
             matriz_comentarios.loc[
-                matriz_comentarios["Punto_QR"] == pt, col
+                matriz_comentarios["Punto_QR"] == pt,
+                col
             ] = comentario
 
         elif f"Punto {pt}" in puntos_estaticos:
             matriz_construida.loc[
-                matriz_construida["Punto_QR"] == f"Punto {pt}", col
+                matriz_construida["Punto_QR"] == f"Punto {pt}",
+                col
             ] = "SI"
 
             matriz_comentarios.loc[
-                matriz_comentarios["Punto_QR"] == f"Punto {pt}", col
+                matriz_comentarios["Punto_QR"] == f"Punto {pt}",
+                col
             ] = comentario
-
+            
 porcentajes_columnas = []
 for col in columnas_rondines:
     conteo_si = (matriz_construida[col] == "SI").sum()
