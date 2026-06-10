@@ -10,6 +10,7 @@ import smtplib
 from email.message import EmailMessage
 import re
 import streamlit as st
+from st_aggrid import AgGrid
 
 def obtener_hora_local():
     tz = pytz.timezone('America/Mexico_City')
