@@ -167,9 +167,6 @@ df_filtrado_base = df_raw[
 # CONSTRUCCIÓN DE LA MATRIZ DE 44 PUNTOS
 # =========================================================
 puntos_estaticos = [f"Punto {i}" for i in range(1, 45)]
-matriz_comentarios = pd.DataFrame({"Punto_QR": puntos_estaticos})
-for col in columnas_rondines:
-    matriz_comentarios[col] = ""
 
 if turno_seleccionado == "DIA":
     columnas_rondines = [
@@ -187,6 +184,10 @@ for col in columnas_rondines:
     registros_rondin = df_filtrado_base[
         df_filtrado_base["Rondin_Asignado"] == col
     ]
+
+matriz_comentarios = pd.DataFrame({"Punto_QR": puntos_estaticos})
+for col in columnas_rondines:
+    matriz_comentarios[col] = ""
 
     for _, fila_reg in registros_rondin.iterrows():
         pt = fila_reg["Punto_QR"]
