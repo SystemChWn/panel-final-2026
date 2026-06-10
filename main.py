@@ -10,7 +10,6 @@ import smtplib
 from email.message import EmailMessage
 import re
 import streamlit as st
-from st_aggrid import AgGrid, GridOptionsBuilder
 
 def obtener_hora_local():
     tz = pytz.timezone('America/Mexico_City')
@@ -63,6 +62,7 @@ st.markdown(
         overflow: hidden !important;
     }
     
+    /* Esta es la clave: esto elimina el contenedor que obliga a que el sidebar sea alto */
     [data-testid="stSidebarContent"] {
         height: auto !important;
     }
@@ -92,7 +92,6 @@ except Exception as e:
 
 # LIMPIEZA Y CONVERSIÓN DE FECHAS/HORAS
 df_raw = df_raw.fillna("")
-st.write(df_raw.columns.tolist())
 df_raw["Punto_QR"] = df_raw["Punto_QR"].astype(str).str.replace(".0", "", regex=False).str.strip()
 
 fecha_convertida = pd.to_datetime(df_raw["Fecha_Hora"], errors="coerce", dayfirst=True)
@@ -169,7 +168,6 @@ df_filtrado_base = df_raw[
 # =========================================================
 puntos_estaticos = [f"Punto {i}" for i in range(1, 45)]
 matriz_construida = pd.DataFrame({"Punto_QR": puntos_estaticos})
-matriz_comentarios = pd.DataFrame({"Punto_QR": puntos_estaticos})
 
 if turno_seleccionado == "DIA":
     columnas_rondines = [
@@ -182,46 +180,16 @@ else:
         "Rondin 4 (01:00-03:00)", "Rondin 5 (03:00-05:00)", "Rondin 6 (05:00-07:00)"
     ]
 
-# Inicializar columnas de la matriz principal
 for col in columnas_rondines:
     matriz_construida[col] = "—"
-
-# Inicializar matriz de comentarios
-for col in columnas_rondines:
-    matriz_comentarios[col] = ""
-
-# Llenar matrices
-for col in columnas_rondines:
-    registros_rondin = df_filtrado_base[
-        df_filtrado_base["Rondin_Asignado"] == col
-    ]
-
+    registros_rondin = df_filtrado_base[df_filtrado_base["Rondin_Asignado"] == col]
     for _, fila_reg in registros_rondin.iterrows():
         pt = fila_reg["Punto_QR"]
-        comentario = str(fila_reg.get("Comentarios", "")).strip()
-
         if pt in puntos_estaticos:
-            matriz_construida.loc[
-                matriz_construida["Punto_QR"] == pt,
-                col
-            ] = "SI"
-
-            matriz_comentarios.loc[
-                matriz_comentarios["Punto_QR"] == pt,
-                col
-            ] = comentario
-
+            matriz_construida.loc[matriz_construida["Punto_QR"] == pt, col] = "SI"
         elif f"Punto {pt}" in puntos_estaticos:
-            matriz_construida.loc[
-                matriz_construida["Punto_QR"] == f"Punto {pt}",
-                col
-            ] = "SI"
+            matriz_construida.loc[matriz_construida["Punto_QR"] == f"Punto {pt}", col] = "SI"
 
-            matriz_comentarios.loc[
-                matriz_comentarios["Punto_QR"] == f"Punto {pt}",
-                col
-            ] = comentario
-            
 porcentajes_columnas = []
 for col in columnas_rondines:
     conteo_si = (matriz_construida[col] == "SI").sum()
@@ -345,14 +313,7 @@ def color_semaforo_suave(val):
         return 'background-color: #F8D7DA; color: #721C24; text-align: center;'
     return 'text-align: center;'
 
-df_estilizado = (
-    matriz_construida.style
-    .map(color_semaforo_suave, subset=columnas_rondines)
-    .map(
-        lambda x: 'text-align: center; font-weight: bold; background-color: transparent;',
-        subset=["TOTAL"]
-    )
-)
+df_estilizado = matriz_construida.style.map(color_semaforo_suave, subset=columnas_rondines).map(lambda x: 'text-align: center; font-weight: bold; background-color: transparent;', subset=["TOTAL"])
 
 st.dataframe(
     df_estilizado,
@@ -360,50 +321,6 @@ st.dataframe(
     hide_index=True,
     height=600
 )
-
-# =========================================================
-st.subheader("PRUEBA AGGRID")
-
-df_aggrid = matriz_construida.copy()
-
-df_aggrid["_tooltip"] = ""
-
-for idx, fila in df_aggrid.iterrows():
-
-    comentarios_fila = []
-
-    for col in columnas_rondines:
-
-        comentario = matriz_comentarios.loc[idx, col]
-
-        if comentario:
-
-            comentarios_fila.append(
-                f"{col}: {comentario}"
-            )
-
-    df_aggrid.at[idx, "_tooltip"] = "\n".join(comentarios_fila)
-
-gb = GridOptionsBuilder.from_dataframe(df_aggrid)
-
-gb.configure_column("_tooltip", hide=True)
-
-for col in columnas_rondines:
-
-    gb.configure_column(
-        col,
-        tooltipField="_tooltip"
-    )
-
-grid_options = gb.build()
-
-AgGrid(
-    df_aggrid,
-    gridOptions=grid_options,
-    height=600,
-    fit_columns_on_grid_load=True
-)
-# =========================================================
 
 # =========================================================
 # 2. RECUADRO SEPARADO DE ESTADO
