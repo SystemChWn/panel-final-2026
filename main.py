@@ -303,7 +303,7 @@ with dash_col2:
 # =========================================================
 st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 fecha_pantalla_str = f"{dia_seleccionado:02d}/{numero_mes:02d}/{anio_seleccionado}"
-st.subheader(f"MATRIZ DE CONTROL DE RONDINES ({turno_seleccionado}) — FECHA: {fecha_pantalla_str}")
+st.subheader(f"CONTROL DE RONDINES ({turno_seleccionado}) — FECHA: {fecha_pantalla_str}")
 
 def color_semaforo_suave(val):
     v = str(val).strip()
