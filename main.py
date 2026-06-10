@@ -66,15 +66,6 @@ st.markdown(
     [data-testid="stSidebarContent"] {
         height: auto !important;
     }
-
-    td[data-testid="stCell"]:hover::after {
-        content: attr(title);
-        position: absolute;
-        background: #333;
-        color: #fff;
-        padding: 5px;
-        z-index: 1000;
-    }
     </style>
     """,
     unsafe_allow_html=True
@@ -189,21 +180,11 @@ else:
         "Rondin 4 (01:00-03:00)", "Rondin 5 (03:00-05:00)", "Rondin 6 (05:00-07:00)"
     ]
 
-# --- CAMBIO EN: CONSTRUCCIÓN DE LA MATRIZ ---
-# Crea un diccionario para almacenar las observaciones
-observaciones_map = {} 
-
 for col in columnas_rondines:
     matriz_construida[col] = "—"
     registros_rondin = df_filtrado_base[df_filtrado_base["Rondin_Asignado"] == col]
     for _, fila_reg in registros_rondin.iterrows():
         pt = fila_reg["Punto_QR"]
-        obs = fila_reg.get("Observacion", "") # Asumiendo que tu columna se llama "Observacion"
-        
-        # Guardar observación en el diccionario usando una clave única (Punto + Columna)
-        clave = f"{pt}_{col}"
-        observaciones_map[clave] = obs
-        
         if pt in puntos_estaticos:
             matriz_construida.loc[matriz_construida["Punto_QR"] == pt, col] = "SI"
         elif f"Punto {pt}" in puntos_estaticos:
@@ -300,7 +281,10 @@ with dash_col1:
 # --- GRÁFICO 2: BARRA DE PROGRESO DE PUNTOS EN VERDE ---
 with dash_col2:
     st.markdown('<p class="graph-title">ESTATUS DEL RONDÍN ACTUAL</p>', unsafe_allow_html=True)
-
+    
+    # Usamos la variable que calculamos globalmente al inicio (rondin_actual_en_vivo)
+    # Si el rondín actual calculado no está en las columnas (ej: fuera de horario), 
+    # usamos el primero de la lista de columnas_rondines para evitar errores.
     if rondin_actual_en_vivo in columnas_rondines:
         rondin_a_mostrar = rondin_actual_en_vivo
     else:
