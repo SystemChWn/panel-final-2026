@@ -361,18 +361,49 @@ st.dataframe(
     height=600
 )
 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 st.subheader("PRUEBA AGGRID")
 
-gb = GridOptionsBuilder.from_dataframe(matriz_construida)
+df_aggrid = matriz_construida.copy()
+
+df_aggrid["_tooltip"] = ""
+
+for idx, fila in df_aggrid.iterrows():
+
+    comentarios_fila = []
+
+    for col in columnas_rondines:
+
+        comentario = matriz_comentarios.loc[idx, col]
+
+        if comentario:
+
+            comentarios_fila.append(
+                f"{col}: {comentario}"
+            )
+
+    df_aggrid.at[idx, "_tooltip"] = "\n".join(comentarios_fila)
+
+gb = GridOptionsBuilder.from_dataframe(df_aggrid)
+
+gb.configure_column("_tooltip", hide=True)
+
+for col in columnas_rondines:
+
+    gb.configure_column(
+        col,
+        tooltipField="_tooltip"
+    )
 
 grid_options = gb.build()
 
 AgGrid(
-    matriz_construida,
+    df_aggrid,
     gridOptions=grid_options,
     height=600,
     fit_columns_on_grid_load=True
 )
++++++++++++++++++++++++++++++++++++++++
 
 # =========================================================
 # 2. RECUADRO SEPARADO DE ESTADO
