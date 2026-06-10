@@ -10,7 +10,7 @@ import smtplib
 from email.message import EmailMessage
 import re
 import streamlit as st
-from st_aggrid import AgGrid
+from st_aggrid import AgGrid, GridOptionsBuilder
 
 def obtener_hora_local():
     tz = pytz.timezone('America/Mexico_City')
@@ -359,6 +359,19 @@ st.dataframe(
     use_container_width=True,
     hide_index=True,
     height=600
+)
+
+st.subheader("PRUEBA AGGRID")
+
+gb = GridOptionsBuilder.from_dataframe(matriz_construida)
+
+grid_options = gb.build()
+
+AgGrid(
+    matriz_construida,
+    gridOptions=grid_options,
+    height=600,
+    fit_columns_on_grid_load=True
 )
 
 # =========================================================
