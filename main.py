@@ -90,6 +90,8 @@ except Exception as e:
     st.error(f"Error al cargar datos desde Google Sheets: {e}")
     st.stop()
 
+df_raw = asignar_rondines_por_puntos(df_raw)
+
 # LIMPIEZA Y CONVERSIÓN DE FECHAS/HORAS
 df_raw = df_raw.fillna("")
 df_raw["Punto_QR"] = df_raw["Punto_QR"].astype(str).str.replace(".0", "", regex=False).str.strip()
@@ -131,7 +133,7 @@ def asignar_rondines_por_puntos(df):
     df["Rondin_Asignado"] = rondines
     return df
 
-df_raw = asignar_rondines_por_puntos(df_raw)
+ahora = obtener_hora_local()
 hoy_dia = ahora.day
 hoy_mes = ahora.month
 hoy_anio = ahora.year
@@ -292,21 +294,14 @@ with dash_col1:
 with dash_col2:
     st.markdown('<p class="graph-title">ESTATUS DEL RONDÍN ACTUAL</p>', unsafe_allow_html=True)
     
-    # Usamos la variable que calculamos globalmente al inicio (rondin_actual_en_vivo)
-    # Si el rondín actual calculado no está en las columnas (ej: fuera de horario), 
-    # usamos el primero de la lista de columnas_rondines para evitar errores.
-    if rondin_actual_en_vivo in columnas_rondines:
-        rondin_a_mostrar = rondin_actual_en_vivo
+    # Detección del rondín en vivo según los datos filtrados
+    if not df_filtrado_base.empty:
+        rondin_a_mostrar = df_filtrado_base["Rondin_Asignado"].iloc[-1]
     else:
-        rondin_a_mostrar = columnas_rondines[0]
+        rondin_a_mostrar = "Rondin 1"
         
     puntos_completados_ahora = (matriz_construida[rondin_a_mostrar] == "SI").sum()
     porcentaje_barra = puntos_completados_ahora / 44
-
-    st.markdown(f'<p style="font-size: 20px; font-weight: bold; margin-top: 15px;">TURNO: {turno_seleccionado}</p>', unsafe_allow_html=True)
-    st.markdown(f'<p style="font-size: 18px; font-weight: bold;">{rondin_a_mostrar}</p>', unsafe_allow_html=True)
-    st.markdown(f'<p>Progreso: {puntos_completados_ahora} de 44 puntos escaneados</p>', unsafe_allow_html=True)
-    st.progress(float(porcentaje_barra))
 
 # =========================================================
 # 1. MATRIZ VISUAL PRINCIPAL (TABLA SUPERIOR)
