@@ -107,25 +107,20 @@ df_raw["Hora_Corta"] = fecha_convertida.dt.strftime("%H:%M")
 # ASIGNACIÓN DE RONDINES
 # =========================================================
 def asignar_rondines_por_puntos(df):
-    # 1. Aseguramos orden cronológico
     df = df.sort_values(by="Fecha_Hora")
-    
     rondines = []
     contador_rondin = 1
     ultimo_punto = 0
     
     for punto in df["Punto_QR"]:
-        # Convertimos punto a entero para comparar
         try:
-            punto_int = int(punto.replace("Punto ", ""))
+            punto_int = int(str(punto).replace("Punto ", ""))
         except:
             punto_int = 0
             
-        # Lógica: Si el punto actual es menor que el anterior, es un nuevo rondín
-        # Ej: Si pasamos de 44 a 1, incrementamos el contador
         if punto_int < ultimo_punto and punto_int < 10: 
             contador_rondin += 1
-            if contador_rondin > 6: contador_rondin = 1 # Reinicia después del 6
+            if contador_rondin > 6: contador_rondin = 1 
             
         rondines.append(f"Rondin {contador_rondin}")
         ultimo_punto = punto_int
@@ -176,24 +171,19 @@ else:
     rondin_a_mostrar = "Rondin 1"
 
 # =========================================================
-# CONSTRUCCIÓN DE LA MATRIZ DE 44 PUNTOS
+# CONSTRUCCIÓN DE LA MATRIZ DE 44 PUNTOS (MODIFICADO)
 # =========================================================
 puntos_estaticos = [f"Punto {i}" for i in range(1, 45)]
 matriz_construida = pd.DataFrame({"Punto_QR": puntos_estaticos})
 
-if turno_seleccionado == "DIA":
-    columnas_rondines = [
-        "Rondin 1 (07:00-09:00)", "Rondin 2 (09:00-11:00)", "Rondin 3 (11:00-13:00)", 
-        "Rondin 4 (13:00-15:00)", "Rondin 5 (15:00-17:00)", "Rondin 6 (17:00-19:00)"
-    ]
-else:
-    columnas_rondines = [
-        "Rondin 1 (19:00-21:00)", "Rondin 2 (21:00-23:00)", "Rondin 3 (23:00-01:00)", 
-        "Rondin 4 (01:00-03:00)", "Rondin 5 (03:00-05:00)", "Rondin 6 (05:00-07:00)"
-    ]
+# Ya no dependemos del turno para definir el nombre, 
+# siempre serán 6 rondines consecutivos.
+columnas_rondines = ["Rondin 1", "Rondin 2", "Rondin 3", "Rondin 4", "Rondin 5", "Rondin 6"]
 
 for col in columnas_rondines:
     matriz_construida[col] = "—"
+    # El resto de la lógica de llenado (debajo de esta línea) sigue funcionando igual
+    # porque ahora tu columna "Rondin_Asignado" tendrá valores como "Rondin 1", "Rondin 2"...
     registros_rondin = df_filtrado_base[df_filtrado_base["Rondin_Asignado"] == col]
     for _, fila_reg in registros_rondin.iterrows():
         pt = fila_reg["Punto_QR"]
