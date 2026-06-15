@@ -104,33 +104,38 @@ df_raw["Hora_Corta"] = fecha_convertida.dt.strftime("%H:%M")
 # =========================================================
 # ASIGNACIÓN DE RONDINES
 # =========================================================
-def determinar_bloque_rondin(hora_texto):
-    try:
-        h = int(hora_texto[:2])
-        if 7 <= h < 9: return "Rondin 1 (07:00-09:00)"
-        elif 9 <= h < 11: return "Rondin 2 (09:00-11:00)"
-        elif 11 <= h < 13: return "Rondin 3 (11:00-13:00)"
-        elif 13 <= h < 15: return "Rondin 4 (13:00-15:00)"
-        elif 15 <= h < 17: return "Rondin 5 (15:00-17:00)"
-        elif 17 <= h < 19: return "Rondin 6 (17:00-19:00)"
-        elif 19 <= h < 21: return "Rondin 1 (19:00-21:00)"
-        elif 21 <= h < 23: return "Rondin 2 (21:00-23:00)"
-        elif h == 23 or h == 0: return "Rondin 3 (23:00-01:00)"
-        elif 1 <= h < 3: return "Rondin 4 (01:00-03:00)"
-        elif 3 <= h < 5: return "Rondin 5 (03:00-05:00)"
-        elif 5 <= h < 7: return "Rondin 6 (05:00-07:00)"
-        return "Fuera de Tiempo"
-    except:
-        return "Sin Horario"
+def asignar_rondines_por_puntos(df):
+    # 1. Aseguramos orden cronológico
+    df = df.sort_values(by="Fecha_Hora")
+    
+    rondines = []
+    contador_rondin = 1
+    ultimo_punto = 0
+    
+    for punto in df["Punto_QR"]:
+        # Convertimos punto a entero para comparar
+        try:
+            punto_int = int(punto.replace("Punto ", ""))
+        except:
+            punto_int = 0
+            
+        # Lógica: Si el punto actual es menor que el anterior, es un nuevo rondín
+        # Ej: Si pasamos de 44 a 1, incrementamos el contador
+        if punto_int < ultimo_punto and punto_int < 10: 
+            contador_rondin += 1
+            if contador_rondin > 6: contador_rondin = 1 # Reinicia después del 6
+            
+        rondines.append(f"Rondin {contador_rondin}")
+        ultimo_punto = punto_int
+        
+    df["Rondin_Asignado"] = rondines
+    return df
 
-df_raw["Rondin_Asignado"] = df_raw["Hora_Str"].apply(determinar_bloque_rondin)
-
-ahora = obtener_hora_local() 
+df_raw = asignar_rondines_por_puntos(df_raw)
 hoy_dia = ahora.day
 hoy_mes = ahora.month
 hoy_anio = ahora.year
 hoy_hora = ahora.hour
-
 
 rondin_actual_en_vivo = determinar_bloque_rondin(ahora.strftime("%H:%M:%S"))
 
@@ -162,6 +167,11 @@ df_filtrado_base = df_raw[
     (df_raw["Mes_Num"] == numero_mes) & 
     (df_raw["Dia_Num"] == dia_seleccionado)
 ].copy()
+
+if not df_filtrado_base.empty:
+    rondin_a_mostrar = df_filtrado_base["Rondin_Asignado"].iloc[-1]
+else:
+    rondin_a_mostrar = "Rondin 1"
 
 # =========================================================
 # CONSTRUCCIÓN DE LA MATRIZ DE 44 PUNTOS
