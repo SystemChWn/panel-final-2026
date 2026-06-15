@@ -8,12 +8,34 @@ import pytz
 from streamlit_autorefresh import st_autorefresh
 import smtplib
 from email.message import EmailMessage
-import re
-import streamlit as st
 
+# --- 1. FUNCIONES PRINCIPALES (Deben ir al inicio) ---
 def obtener_hora_local():
     tz = pytz.timezone('America/Mexico_City')
     return datetime.now(tz)
+
+def asignar_rondines_por_puntos(df):
+    df = df.sort_values(by="Fecha_Hora")
+    rondines = []
+    contador_rondin = 1
+    ultimo_punto = 0
+    
+    for punto in df["Punto_QR"]:
+        try:
+            punto_int = int(str(punto).replace("Punto ", ""))
+        except:
+            punto_int = 0
+            
+        # Si el punto actual es menor al anterior y estamos en rango de inicio, es un nuevo rondín
+        if punto_int < ultimo_punto and punto_int < 10: 
+            contador_rondin += 1
+            if contador_rondin > 6: contador_rondin = 1 
+            
+        rondines.append(f"Rondin {contador_rondin}")
+        ultimo_punto = punto_int
+        
+    df["Rondin_Asignado"] = rondines
+    return df
     
 # CONFIGURACIÓN DE PÁGINA
 st.markdown(
@@ -71,7 +93,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-col_logo, col_titulo = st.columns([0.06, 0.94], gap="small")
+st.set_page_config(layout="wide")
 
 with col_logo:
     st.image("https://lh3.googleusercontent.com/d/1YuA-V3W27vrLeDszpzRYNJnwMKGvpHpA", width=55)
@@ -84,13 +106,24 @@ sheet_id = "1PjB61hZhT1SXO7eRgRgnxo39W2o5AaFdhFTjPz2eb7k"
 url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
 
 # CARGAR DATOS
+sheet_id = "1PjB61hZhT1SXO7eRgRgnxo39W2o5AaFdhFTjPz2eb7k"
+url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
+
 try:
     df_raw = pd.read_csv(f"{url}&nocache={time.time()}")
+    df_raw = df_raw.fillna("")
+    df_raw["Punto_QR"] = df_raw["Punto_QR"].astype(str).str.replace(".0", "", regex=False).str.strip()
+    # Convertir fechas
+    fecha_convertida = pd.to_datetime(df_raw["Fecha_Hora"], errors="coerce", dayfirst=True)
+    df_raw["Dia_Num"] = fecha_convertida.dt.day.fillna(0).astype(int)
+    df_raw["Mes_Num"] = fecha_convertida.dt.month.fillna(0).astype(int)
+    df_raw["Anio_Num"] = fecha_convertida.dt.year.fillna(0).astype(int)
+    
+    # Aplicar el nuevo motor de rondines
+    df_raw = asignar_rondines_por_puntos(df_raw)
 except Exception as e:
-    st.error(f"Error al cargar datos desde Google Sheets: {e}")
+    st.error(f"Error al cargar datos: {e}")
     st.stop()
-
-df_raw = asignar_rondines_por_puntos(df_raw)
 
 # LIMPIEZA Y CONVERSIÓN DE FECHAS/HORAS
 df_raw = df_raw.fillna("")
@@ -118,6 +151,7 @@ def asignar_rondines_por_puntos(df):
         except:
             punto_int = 0
             
+        # Si el punto baja (ej: 44 a 1), es un nuevo rondín
         if punto_int < ultimo_punto and punto_int < 10: 
             contador_rondin += 1
             if contador_rondin > 6: contador_rondin = 1 
@@ -127,7 +161,7 @@ def asignar_rondines_por_puntos(df):
         
     df["Rondin_Asignado"] = rondines
     return df
-
+    
 ahora = obtener_hora_local()
 hoy_dia = ahora.day
 hoy_mes = ahora.month
@@ -142,26 +176,17 @@ st_autorefresh(interval=120000)
 # =========================================================
 # BARRA LATERAL (FILTROS DE BUSQUEDA)
 # =========================================================
-anios_opciones = [2026, 2027, 2028, 2029, 2030]
-meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
-dias_opciones = list(range(1, 32))
+ahora = obtener_hora_local()
+st.sidebar.subheader("FILTROS")
+anio_seleccionado = st.sidebar.selectbox("AÑO", [2026, 2027, 2028], index=0)
+mes_seleccionado = st.sidebar.selectbox("MES", ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"], index=ahora.month-1)
+dia_seleccionado = st.sidebar.selectbox("DÍA", list(range(1, 32)), index=ahora.day-1)
 
-idx_anio = anios_opciones.index(hoy_anio) if hoy_anio in anios_opciones else 0
-idx_mes = hoy_mes - 1
-idx_dia = hoy_dia - 1
-
-anio_seleccionado = st.sidebar.selectbox("AÑO", anios_opciones, index=idx_anio)
-mes_seleccionado = st.sidebar.selectbox("MES", meses_nombres, index=idx_mes)
-
-meses_mapeo = {n: i+1 for i, n in enumerate(meses_nombres)}
-numero_mes = meses_mapeo[mes_seleccionado]
-
-dia_seleccionado = st.sidebar.selectbox("DÍA", dias_opciones, index=idx_dia)
-turno_seleccionado = st.sidebar.selectbox("TURNO", ["DIA", "NOCHE"], index=turno_sugerido_idx)
+mes_num = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"].index(mes_seleccionado) + 1
 
 df_filtrado_base = df_raw[
     (df_raw["Anio_Num"] == anio_seleccionado) & 
-    (df_raw["Mes_Num"] == numero_mes) & 
+    (df_raw["Mes_Num"] == mes_num) & 
     (df_raw["Dia_Num"] == dia_seleccionado)
 ].copy()
 
@@ -173,33 +198,20 @@ else:
 # =========================================================
 # CONSTRUCCIÓN DE LA MATRIZ DE 44 PUNTOS (MODIFICADO)
 # =========================================================
+columnas_rondines = ["Rondin 1", "Rondin 2", "Rondin 3", "Rondin 4", "Rondin 5", "Rondin 6"]
 puntos_estaticos = [f"Punto {i}" for i in range(1, 45)]
 matriz_construida = pd.DataFrame({"Punto_QR": puntos_estaticos})
 
-# Ya no dependemos del turno para definir el nombre, 
-# siempre serán 6 rondines consecutivos.
-columnas_rondines = ["Rondin 1", "Rondin 2", "Rondin 3", "Rondin 4", "Rondin 5", "Rondin 6"]
-
 for col in columnas_rondines:
     matriz_construida[col] = "—"
-    # El resto de la lógica de llenado (debajo de esta línea) sigue funcionando igual
-    # porque ahora tu columna "Rondin_Asignado" tendrá valores como "Rondin 1", "Rondin 2"...
-    registros_rondin = df_filtrado_base[df_filtrado_base["Rondin_Asignado"] == col]
-    for _, fila_reg in registros_rondin.iterrows():
-        pt = fila_reg["Punto_QR"]
+    registros = df_filtrado_base[df_filtrado_base["Rondin_Asignado"] == col]
+    for _, fila in registros.iterrows():
+        pt = fila["Punto_QR"]
+        # Lógica para marcar "SI"
         if pt in puntos_estaticos:
             matriz_construida.loc[matriz_construida["Punto_QR"] == pt, col] = "SI"
         elif f"Punto {pt}" in puntos_estaticos:
             matriz_construida.loc[matriz_construida["Punto_QR"] == f"Punto {pt}", col] = "SI"
-
-porcentajes_columnas = []
-for col in columnas_rondines:
-    conteo_si = (matriz_construida[col] == "SI").sum()
-    porcentajes_columnas.append(f"{(conteo_si / 44) * 100:.1f}%")
-
-total_celdas_tabla = matriz_construida[columnas_rondines].size
-celdas_con_si = (matriz_construida[columnas_rondines] == "SI").sum().sum()
-porcentaje_cumplimiento_general = (celdas_con_si / total_celdas_tabla) * 100 if total_celdas_tabla > 0 else 0
 
 # Calcular columna TOTAL (X/6) para cada renglón
 def calcular_acumulado_fila(fila):
@@ -281,18 +293,17 @@ with dash_col1:
     st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
 
 # --- GRÁFICO 2: BARRA DE PROGRESO DE PUNTOS EN VERDE ---
+dash_col1, dash_col2 = st.columns(2)
 with dash_col2:
-    st.markdown('<p class="graph-title">ESTATUS DEL RONDÍN ACTUAL</p>', unsafe_allow_html=True)
-    
-    # Detección del rondín en vivo según los datos filtrados
+    st.subheader("ESTATUS DEL RONDÍN ACTUAL")
     if not df_filtrado_base.empty:
-        rondin_a_mostrar = df_filtrado_base["Rondin_Asignado"].iloc[-1]
+        rondin_activo = df_filtrado_base["Rondin_Asignado"].iloc[-1]
     else:
-        rondin_a_mostrar = "Rondin 1"
-        
-    puntos_completados_ahora = (matriz_construida[rondin_a_mostrar] == "SI").sum()
-    porcentaje_barra = puntos_completados_ahora / 44
-
+        rondin_activo = "Rondin 1"
+    
+    progreso = (matriz_construida[rondin_activo] == "SI").sum() / 44
+    st.write(f"Estás viendo el: **{rondin_activo}**")
+    st.progress(float(progreso))
 # =========================================================
 # 1. MATRIZ VISUAL PRINCIPAL (TABLA SUPERIOR)
 # =========================================================
@@ -310,12 +321,7 @@ def color_semaforo_suave(val):
 
 df_estilizado = matriz_construida.style.map(color_semaforo_suave, subset=columnas_rondines).map(lambda x: 'text-align: center; font-weight: bold; background-color: transparent;', subset=["TOTAL"])
 
-st.dataframe(
-    df_estilizado,
-    use_container_width=True,
-    hide_index=True,
-    height=600
-)
+st.dataframe(matriz_construida, use_container_width=True, hide_index=True)
 
 # =========================================================
 # 2. RECUADRO SEPARADO DE ESTADO
