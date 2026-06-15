@@ -6,10 +6,10 @@ from io import BytesIO
 import time
 import pytz
 from streamlit_autorefresh import st_autorefresh
-import smtplib
-from email.message import EmailMessage
 
-# --- 1. FUNCIONES PRINCIPALES (Deben ir al inicio) ---
+# --- 1. CONFIGURACIÓN Y FUNCIONES ---
+st.set_page_config(layout="wide")
+
 def obtener_hora_local():
     tz = pytz.timezone('America/Mexico_City')
     return datetime.now(tz)
@@ -25,87 +25,22 @@ def asignar_rondines_por_puntos(df):
             punto_int = int(str(punto).replace("Punto ", ""))
         except:
             punto_int = 0
-            
-        # Si el punto actual es menor al anterior y estamos en rango de inicio, es un nuevo rondín
         if punto_int < ultimo_punto and punto_int < 10: 
             contador_rondin += 1
             if contador_rondin > 6: contador_rondin = 1 
-            
         rondines.append(f"Rondin {contador_rondin}")
         ultimo_punto = punto_int
-        
     df["Rondin_Asignado"] = rondines
     return df
-    
-# CONFIGURACIÓN DE PÁGINA
-st.markdown(
-    """
-    <style>
-    /* Reduce el margen superior de toda la aplicación */
-    .block-container {
-        padding-top: 2.5rem !important;
-        padding-bottom: 0rem !important;
-        padding-right: 1rem !important;
-        padding-left: 1rem !important;
-        max-width: 95% !important;
-    }
 
-    /* Estilo para los encabezados de las tablas (th) */
-    div[data-testid="stDataFrame"] thead tr th {
-        background-color: transparent !important;
-        color: #555555 !important;
-        border-bottom: 2px solid #DDDDDD !important;
-        font-weight: bold !important;
-    }
-    
-    /* Si prefieres que el texto del encabezado sea blanco si el fondo fuera oscuro */
-    [data-theme="dark"] div[data-testid="stDataFrame"] thead tr th {
-        color: #CCCCCC !important;
-    }
-
-    /* Elimina el espacio extra arriba del título */
-    h1 {
-        margin-top: 0px !important;
-    }
-
-    /* Esto sube los filtros al máximo posible en la barra lateral */
-    [data-testid="stSidebar"] section {
-        padding-top: -10rem !important;
-    }
-    
-    /* Esto elimina el margen superior de los widgets (selectbox) */
-    [data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
-        gap: 0.20rem !important; /* Ajusta este valor si quieres más o menos espacio */
-    }
-    
-/* Forzar al sidebar a no tener altura fija y ignorar el scroll */
-    section[data-testid="stSidebar"] {
-        height: auto !important;
-        overflow: hidden !important;
-    }
-    
-    /* Esta es la clave: esto elimina el contenedor que obliga a que el sidebar sea alto */
-    [data-testid="stSidebarContent"] {
-        height: auto !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-st.set_page_config(layout="wide")
-
+# --- 2. INTERFAZ VISUAL ---
+col_logo, col_titulo = st.columns([0.06, 0.94], gap="small")
 with col_logo:
     st.image("https://lh3.googleusercontent.com/d/1YuA-V3W27vrLeDszpzRYNJnwMKGvpHpA", width=55)
-
 with col_titulo:
     st.title("PANEL DE SUPERVISIÓN")
 
-# GOOGLE SHEETS
-sheet_id = "1PjB61hZhT1SXO7eRgRgnxo39W2o5AaFdhFTjPz2eb7k"
-url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
-
-# CARGAR DATOS
+# --- 3. CARGA DE DATOS ---
 sheet_id = "1PjB61hZhT1SXO7eRgRgnxo39W2o5AaFdhFTjPz2eb7k"
 url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
 
@@ -113,324 +48,44 @@ try:
     df_raw = pd.read_csv(f"{url}&nocache={time.time()}")
     df_raw = df_raw.fillna("")
     df_raw["Punto_QR"] = df_raw["Punto_QR"].astype(str).str.replace(".0", "", regex=False).str.strip()
-    # Convertir fechas
     fecha_convertida = pd.to_datetime(df_raw["Fecha_Hora"], errors="coerce", dayfirst=True)
     df_raw["Dia_Num"] = fecha_convertida.dt.day.fillna(0).astype(int)
     df_raw["Mes_Num"] = fecha_convertida.dt.month.fillna(0).astype(int)
     df_raw["Anio_Num"] = fecha_convertida.dt.year.fillna(0).astype(int)
-    
-    # Aplicar el nuevo motor de rondines
     df_raw = asignar_rondines_por_puntos(df_raw)
 except Exception as e:
     st.error(f"Error al cargar datos: {e}")
     st.stop()
 
-# LIMPIEZA Y CONVERSIÓN DE FECHAS/HORAS
-df_raw = df_raw.fillna("")
-df_raw["Punto_QR"] = df_raw["Punto_QR"].astype(str).str.replace(".0", "", regex=False).str.strip()
-
-fecha_convertida = pd.to_datetime(df_raw["Fecha_Hora"], errors="coerce", dayfirst=True)
-df_raw["Dia_Num"] = fecha_convertida.dt.day.fillna(0).astype(int)
-df_raw["Mes_Num"] = fecha_convertida.dt.month.fillna(0).astype(int)
-df_raw["Anio_Num"] = fecha_convertida.dt.year.fillna(0).astype(int)
-df_raw["Hora_Str"] = fecha_convertida.dt.strftime("%H:%M:%S")
-df_raw["Hora_Corta"] = fecha_convertida.dt.strftime("%H:%M")
-
-# =========================================================
-# ASIGNACIÓN DE RONDINES
-# =========================================================
-def asignar_rondines_por_puntos(df):
-    df = df.sort_values(by="Fecha_Hora")
-    rondines = []
-    contador_rondin = 1
-    ultimo_punto = 0
-    
-    for punto in df["Punto_QR"]:
-        try:
-            punto_int = int(str(punto).replace("Punto ", ""))
-        except:
-            punto_int = 0
-            
-        # Si el punto baja (ej: 44 a 1), es un nuevo rondín
-        if punto_int < ultimo_punto and punto_int < 10: 
-            contador_rondin += 1
-            if contador_rondin > 6: contador_rondin = 1 
-            
-        rondines.append(f"Rondin {contador_rondin}")
-        ultimo_punto = punto_int
-        
-    df["Rondin_Asignado"] = rondines
-    return df
-    
+# --- 4. SIDEBAR Y FILTROS ---
 ahora = obtener_hora_local()
-hoy_dia = ahora.day
-hoy_mes = ahora.month
-hoy_anio = ahora.year
-hoy_hora = ahora.hour
+anio_sel = st.sidebar.selectbox("AÑO", [2026, 2027, 2028], index=0)
+mes_sel = st.sidebar.selectbox("MES", ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"], index=ahora.month-1)
+dia_sel = st.sidebar.selectbox("DÍA", list(range(1, 32)), index=ahora.day-1)
+mes_num = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"].index(mes_sel) + 1
 
-rondin_actual_en_vivo = determinar_bloque_rondin(ahora.strftime("%H:%M:%S"))
+df_filtrado = df_raw[(df_raw["Anio_Num"]==anio_sel) & (df_raw["Mes_Num"]==mes_num) & (df_raw["Dia_Num"]==dia_sel)].copy()
 
-turno_sugerido_idx = 0 if 7 <= hoy_hora < 19 else 1
-st_autorefresh(interval=120000)
-
-# =========================================================
-# BARRA LATERAL (FILTROS DE BUSQUEDA)
-# =========================================================
-ahora = obtener_hora_local()
-st.sidebar.subheader("FILTROS")
-anio_seleccionado = st.sidebar.selectbox("AÑO", [2026, 2027, 2028], index=0)
-mes_seleccionado = st.sidebar.selectbox("MES", ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"], index=ahora.month-1)
-dia_seleccionado = st.sidebar.selectbox("DÍA", list(range(1, 32)), index=ahora.day-1)
-
-mes_num = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"].index(mes_seleccionado) + 1
-
-df_filtrado_base = df_raw[
-    (df_raw["Anio_Num"] == anio_seleccionado) & 
-    (df_raw["Mes_Num"] == mes_num) & 
-    (df_raw["Dia_Num"] == dia_seleccionado)
-].copy()
-
-if not df_filtrado_base.empty:
-    rondin_a_mostrar = df_filtrado_base["Rondin_Asignado"].iloc[-1]
-else:
-    rondin_a_mostrar = "Rondin 1"
-
-# =========================================================
-# CONSTRUCCIÓN DE LA MATRIZ DE 44 PUNTOS (MODIFICADO)
-# =========================================================
+# --- 5. MATRIZ DE RONDINES ---
 columnas_rondines = ["Rondin 1", "Rondin 2", "Rondin 3", "Rondin 4", "Rondin 5", "Rondin 6"]
-puntos_estaticos = [f"Punto {i}" for i in range(1, 45)]
-matriz_construida = pd.DataFrame({"Punto_QR": puntos_estaticos})
+matriz = pd.DataFrame({"Punto_QR": [f"Punto {i}" for i in range(1, 45)]})
 
 for col in columnas_rondines:
-    matriz_construida[col] = "—"
-    registros = df_filtrado_base[df_filtrado_base["Rondin_Asignado"] == col]
-    for _, fila in registros.iterrows():
-        pt = fila["Punto_QR"]
-        # Lógica para marcar "SI"
-        if pt in puntos_estaticos:
-            matriz_construida.loc[matriz_construida["Punto_QR"] == pt, col] = "SI"
-        elif f"Punto {pt}" in puntos_estaticos:
-            matriz_construida.loc[matriz_construida["Punto_QR"] == f"Punto {pt}", col] = "SI"
+    matriz[col] = "—"
+    registros = df_filtrado[df_filtrado["Rondin_Asignado"] == col]
+    for _, f in registros.iterrows():
+        pt = f["Punto_QR"]
+        matriz.loc[matriz["Punto_QR"] == pt, col] = "SI"
+        matriz.loc[matriz["Punto_QR"] == f"Punto {pt}", col] = "SI"
 
-# Calcular columna TOTAL (X/6) para cada renglón
-def calcular_acumulado_fila(fila):
-    completados = (fila[columnas_rondines] == "SI").sum()
-    return f"{completados}/6"
-
-matriz_construida["TOTAL"] = matriz_construida.apply(calcular_acumulado_fila, axis=1)
-
-columnas_ordenadas = ["Punto_QR"] + columnas_rondines + ["TOTAL"]
-matriz_construida = matriz_construida[columnas_ordenadas]
-
-# BOTÓN DE DESCARGA EN EL SIDEBAR
-buffer = BytesIO()
-with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-    matriz_construida.to_excel(writer, index=False, sheet_name="Matriz_Rondines")
-buffer.seek(0)
-fecha_archivo_str = f"{dia_seleccionado:02d}_{numero_mes:02d}_{anio_seleccionado}"
-st.sidebar.markdown("---")
-
-# Se agregó un contenedor para asegurar el estilo del botón
-st.sidebar.markdown(
-    """
-    <style>
-    div[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
-        background-color: #000000 !important; 
-        color: #000000 !important;           
-        border: 1px solid #000000 !important;
-        transition: 0.3s !important;         
-    }
-    div[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover {
-        background-color: #000000 !important; 
-        color: #000000 !important;           
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-st.sidebar.download_button(
-    label="⭳   Descargar Excel",
-    data=buffer,
-    file_name=f"Archivo_{fecha_archivo_str}_{turno_seleccionado}.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    use_container_width=True,
-    type="secondary"
-)
-
-# =========================================================
-# DISTRIBUCIÓN SIMÉTRICA (GRÁFICAS SUPERIORES)
-# =========================================================
-dash_col1, dash_col2 = st.columns(2, gap="large")
-
-# --- GRÁFICO 1: GRÁFICA DE ARO ---
-with dash_col1:
-    st.markdown('<p class="graph-title">CUMPLIMIENTO GENERAL DEL TURNO</p>', unsafe_allow_html=True)
-    porcentaje_faltante = 100 - porcentaje_cumplimiento_general
-    
-    df_aro = pd.DataFrame({
-        "Estatus": ["Completado", "Pendiente"],
-        "Porcentaje": [porcentaje_cumplimiento_general, porcentaje_faltante]
-    })
-    
-    fig_donut = px.pie(
-        df_aro,
-        values="Porcentaje",
-        names="Estatus",
-        hole=0.65,
-        color="Estatus",
-        color_discrete_map={"Completado": "#60A5FA", "Pendiente": "#E9ECEF"}
-    )
-    fig_donut.update_traces(textinfo="none", hoverinfo="label+percent", hole=0.65)
-    fig_donut.update_layout(
-        annotations=[dict(text=f"{porcentaje_cumplimiento_general:.1f}%", x=0.5, y=0.5, font_size=24, font_weight="bold", showarrow=False)],
-        showlegend=False,
-        margin=dict(l=10, r=10, t=10, b=10),
-        height=190,
-        paper_bgcolor='rgba(0,0,0,0)'
-    )
-    st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
-
-# --- GRÁFICO 2: BARRA DE PROGRESO DE PUNTOS EN VERDE ---
-dash_col1, dash_col2 = st.columns(2)
-with dash_col2:
+# --- 6. VISUALIZACIÓN ---
+dash1, dash2 = st.columns(2)
+with dash2:
     st.subheader("ESTATUS DEL RONDÍN ACTUAL")
-    if not df_filtrado_base.empty:
-        rondin_activo = df_filtrado_base["Rondin_Asignado"].iloc[-1]
-    else:
-        rondin_activo = "Rondin 1"
-    
-    progreso = (matriz_construida[rondin_activo] == "SI").sum() / 44
-    st.write(f"Estás viendo el: **{rondin_activo}**")
+    rondin_activo = df_filtrado["Rondin_Asignado"].iloc[-1] if not df_filtrado.empty else "Rondin 1"
+    progreso = (matriz[rondin_activo] == "SI").sum() / 44
+    st.write(f"Rondín en curso: **{rondin_activo}**")
     st.progress(float(progreso))
-# =========================================================
-# 1. MATRIZ VISUAL PRINCIPAL (TABLA SUPERIOR)
-# =========================================================
-st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-fecha_pantalla_str = f"{dia_seleccionado:02d}/{numero_mes:02d}/{anio_seleccionado}"
-st.subheader(f"CONTROL DE RONDINES ({turno_seleccionado}) — FECHA: {fecha_pantalla_str}")
 
-def color_semaforo_suave(val):
-    v = str(val).strip()
-    if v == "SI":
-        return 'background-color: #D4EDDA; color: #155724; font-weight: bold; text-align: center;'
-    elif v == "—":
-        return 'background-color: #F8D7DA; color: #721C24; text-align: center;'
-    return 'text-align: center;'
-
-df_estilizado = matriz_construida.style.map(color_semaforo_suave, subset=columnas_rondines).map(lambda x: 'text-align: center; font-weight: bold; background-color: transparent;', subset=["TOTAL"])
-
-st.dataframe(matriz_construida, use_container_width=True, hide_index=True)
-
-# =========================================================
-# 2. RECUADRO SEPARADO DE ESTADO
-# =========================================================
-st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
-
-df_recuadro_separado = pd.DataFrame([{
-    "Punto_QR": "Total. Puntos",
-    columnas_rondines[0]: porcentajes_columnas[0],
-    columnas_rondines[1]: porcentajes_columnas[1],
-    columnas_rondines[2]: porcentajes_columnas[2],
-    columnas_rondines[3]: porcentajes_columnas[3],
-    columnas_rondines[4]: porcentajes_columnas[4],
-    columnas_rondines[5]: porcentajes_columnas[5],
-    "TOTAL": f"{porcentaje_cumplimiento_general:.1f}%"
-}])
-
-df_recuadro_separado = df_recuadro_separado[columnas_ordenadas]
-
-def estilar_barra_totales(df):
-    estilos = pd.DataFrame('', index=df.index, columns=df.columns)
-    estilos["Punto_QR"] = 'background-color: #E9ECEF; color: #212529; font-weight: bold; text-align: center;'
-    estilos["TOTAL"] = 'background-color: #155724; color: white; font-weight: bold; text-align: center;'
-    for col in columnas_rondines:
-        estilos[col] = 'background-color: #C3E6CB; color: #155724; font-weight: bold; text-align: center;'
-    return estilos
-
-df_recuadro_estilizado = df_recuadro_separado.style.apply(estilar_barra_totales, axis=None)
-
-configuracion_nombres_cortos = {
-    "Punto_QR": st.column_config.Column(label="Col.Compl"),
-    columnas_rondines[0]: st.column_config.Column(label="Rondin 1"),
-    columnas_rondines[1]: st.column_config.Column(label="Rondin 2"),
-    columnas_rondines[2]: st.column_config.Column(label="Rondin 3"),
-    columnas_rondines[3]: st.column_config.Column(label="Rondin 4"),
-    columnas_rondines[4]: st.column_config.Column(label="Rondin 5"),
-    columnas_rondines[5]: st.column_config.Column(label="Rondin 6"),
-    "TOTAL": st.column_config.Column(label="Tab.Total")
-}
-
-st.dataframe(
-    df_recuadro_estilizado,
-    use_container_width=True,
-    hide_index=True,
-    column_config=configuracion_nombres_cortos  # <--- Aplicamos los nuevos nombres aquí
-)
-
-# FIRMA PROFESIONAL
-st.markdown("---")
-st.markdown(
-    '<p style="font-size: 8px; color: #aaaaaa; text-align: left; margin-top: 0px;"> Desarrollado y diseñado por: Fernanda Ibarra | Auxiliar de Sistemas Computacionales • Gestión 2026</p>', 
-    unsafe_allow_html=True
-)
-
-# =========================================================
-# ENVIO DE REPORTE AUTOMATICO
-# =========================================================
-if 'correo_enviado' not in st.session_state:
-    st.session_state.correo_enviado = None
-
-# --- FUNCIÓN DE ENVÍO ---
-def enviar_email(destino, es_automatico=False):
-    try:
-        msg = EmailMessage()
-        msg["Subject"] = f"Reporte de Rondines - {fecha_archivo_str}"
-        msg["From"] = st.secrets["EMAIL_USUARIO"]
-        msg["To"] = destino
-        msg.set_content("Adjunto encontrarás el reporte solicitado.")
-        
-        buffer.seek(0)
-        msg.add_attachment(
-            buffer.read(),
-            maintype="application",
-            subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            filename=f"Reporte_{fecha_archivo_str}_{turno_seleccionado}.xlsx"
-        )
-        
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-            smtp.login(st.secrets["EMAIL_USUARIO"], st.secrets["EMAIL_PASSWORD"])
-            smtp.send_message(msg)
-        
-        # Mensajes personalizados
-        if es_automatico:
-            st.sidebar.success("Reporte enviado automáticamente")
-        else:
-            st.sidebar.success("Enviado correctamente")
-            
-    except Exception as e:
-        st.sidebar.error(f"Error al enviar: {e}")
-
-# --- LÓGICA AUTOMÁTICA (CHECKPOINT) ---
-ahora = obtener_hora_local() 
-
-if (ahora.hour == 7 or ahora.hour == 19) and ahora.minute < 5:
-    fecha_hoy = ahora.strftime("%Y-%m-%d")
-    id_envio = f"{fecha_hoy}-{ahora.hour}"
-    
-    if st.session_state.correo_enviado != id_envio:
-        enviar_email(destino="ana.fernanda.ibarra03@gmail.com", es_automatico=True)
-        st.session_state.correo_enviado = id_envio
-
-# --- INTERFAZ (SIDEBAR) ---
-with st.sidebar:
-    st.divider()
-    st.subheader("ENTREGA DE REPORTES")
-    email_destino = st.text_input("Correo del Destinatario:")
-    
-    if st.button("Enviar"):
-        if not email_destino:
-            st.error("Ingresa una dirección válida para continuar.")
-        else:
-            enviar_email(email_destino, es_automatico=False)
+st.dataframe(matriz, use_container_width=True, hide_index=True)
+st_autorefresh(interval=120000)
