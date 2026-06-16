@@ -1,7 +1,3 @@
 streamlit
 pandas
-plotly
-openpyxl
-streamlit-autorefresh
-pytz
-streamlit-aggrid
+xlsxwriter
