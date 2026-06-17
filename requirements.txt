@@ -3,3 +3,4 @@ pandas
 xlsxwriter
 plotly
 pytz
+streamlit-autorefresh
