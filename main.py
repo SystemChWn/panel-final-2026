@@ -64,7 +64,14 @@ st.markdown("""
     div[data-testid="stVerticalBlock"] > div:last-child {
         margin-bottom: 0px !important;
         padding-bottom: 0px !important;
-            
+    
+    [data-testid="stSidebar"] {
+    display: none !important;}
+    button[kind="header"] {
+    display: none !important;}
+    header {
+    visibility: hidden !important;}
+    
     </script>
     """, unsafe_allow_html=True)
 
