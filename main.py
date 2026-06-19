@@ -77,46 +77,38 @@ def cargar_datos(url):
 
 def asignar_rondines_por_puntos(df):
     if df.empty: return df
-    
-    # 1. Ordenamos cronológicamente para procesar los datos tal como ocurrieron
     df = df.sort_values(by="Fecha_Hora")
     
+    # Preparamos las variables
     rondines = []
-    
-    # 2. Diccionario de estado para rastrear el progreso de cada turno
-    # Cada turno tiene su propio contador y su conjunto de puntos escaneados
-    estado_turnos = {
-        'DIA': {'puntos_set': set(), 'n_rondin': 1},
-        'NOCHE': {'puntos_set': set(), 'n_rondin': 1}
-    }
-    
-    # Cantidad de puntos que componen un rondín completo
-    TOTAL_PUNTOS_POR_RONDIN = 44 
+    contador = 1
+    ultimo_pt = 0
+    ultimo_turno = None
     
     for _, fila in df.iterrows():
-        # Determinamos el turno basado en la hora
         hora = fila["Fecha_Hora"].hour
-        turno_actual = "DIA" if (7 <= hora < 19) else "NOCHE"
+        turno_actual = "DIA" if (hora >= 7 and hora < 19) else "NOCHE"
         
-        # Obtenemos el punto actual como número
-        punto = fila["Punto_QR"]
+        # 1. Reinicio estricto por cambio de turno
+        if ultimo_turno is not None and turno_actual != ultimo_turno:
+            contador = 1
+        else:
+            # 2. Lógica estricta de cambio
+            # Solo si detectamos un inicio (1-5) Y venimos de un final (>=40)
+            punto_actual = pd.to_numeric(str(fila["Punto_QR"]).replace("Punto ", ""), errors="coerce")
+            
+            if (punto_actual in [1, 2, 3]) and (ultimo_pt >= 44):
+                contador += 1
+                if contador > 3: contador = 1
         
-        # 3. Lógica de asignación:
-        # Si el punto actual ya existe en el set del rondín actual, 
-        # significa que estamos iniciando una nueva vuelta (siguiente rondín)
-        if punto in estado_turnos[turno_actual]['puntos_set']:
-            # Solo incrementamos si no hemos llegado al límite de 6 rondines
-            if estado_turnos[turno_actual]['n_rondin'] < 6:
-                estado_turnos[turno_actual]['n_rondin'] += 1
-                # Reiniciamos los puntos escaneados para el nuevo rondín
-                estado_turnos[turno_actual]['puntos_set'] = set()
+        rondines.append(f"Rondin {contador}")
         
-        # Agregamos el punto actual al rondín correspondiente
-        estado_turnos[turno_actual]['puntos_set'].add(punto)
-        
-        # Asignamos el nombre del rondín actual
-        n = estado_turnos[turno_actual]['n_rondin']
-        rondines.append(f"Rondin {n}")
+        # Actualizamos variables de control
+        try:
+            ultimo_pt = int(punto_actual) if not pd.isna(punto_actual) else ultimo_pt
+        except:
+            pass
+        ultimo_turno = turno_actual
         
     df["Rondin_Asignado"] = rondines
     return df
