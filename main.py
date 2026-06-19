@@ -97,7 +97,7 @@ def asignar_rondines_por_puntos(df):
         # es físicamente imposible que sea el mismo rondín. ¡Es una vuelta nueva!
         if punto in estado[turno]['puntos_en_rondin_actual']:
             # Solo pasamos al siguiente si no hemos llegado al 6
-            if estado[turno]['n_rondin'] < 6:
+            if estado[turno]['n_rondin'] < 1:
                 estado[turno]['n_rondin'] += 1
                 estado[turno]['puntos_en_rondin_actual'] = set() # Limpiamos para el nuevo
         
