@@ -96,9 +96,10 @@ def asignar_rondines_por_puntos(df):
             # Solo si detectamos un inicio (1-5) Y venimos de un final (>=40)
             punto_actual = pd.to_numeric(str(fila["Punto_QR"]).replace("Punto ", ""), errors="coerce")
             
-            if (punto_actual in [1, 2, 3, 4, 5, 6]) and (ultimo_pt >= 44):
-                contador += 1
-                if contador > 6: contador = 1
+        if punto_actual == 1 and ultimo_pt[turno] == 44:
+            estado[turno] += 1
+            if estado[turno] > 6:
+                estado[turno] = 1
         
         rondines.append(f"Rondin {contador}")
         
