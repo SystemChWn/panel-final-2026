@@ -77,11 +77,14 @@ def cargar_datos(url):
 
 def asignar_rondines_por_puntos(df):
     if df.empty: return df
-    df = df.sort_values(by="Fecha_Hora") # Ordenamos cronológicamente
+    df = df.sort_values(by="Fecha_Hora")
     
-    # Creamos un registro del avance por turno
-    # Cada turno (DIA/NOCHE) tendrá su propio seguimiento
-    estado = {} 
+    # Usaremos un contador global de cuántos puntos llevamos en cada rondín
+    # Ejemplo: {'DIA': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}}
+    conteo_puntos_por_rondin = {
+        'DIA': {i: 0 for i in range(1, 7)},
+        'NOCHE': {i: 0 for i in range(1, 7)}
+    }
     
     rondines = []
     
@@ -89,24 +92,18 @@ def asignar_rondines_por_puntos(df):
         hora = fila["Fecha_Hora"].hour
         turno = "DIA" if (7 <= hora < 19) else "NOCHE"
         
-        # Inicializamos el seguimiento del turno si es nuevo
-        if turno not in estado:
-            estado[turno] = {'puntos_vistos': set(), 'n_rondin': 1}
+        # Buscamos en qué rondín hay espacio (menos de 44 puntos)
+        rondin_asignado = 1
+        for i in range(1, 7):
+            if conteo_puntos_por_rondin[turno][i] < 44:
+                rondin_asignado = i
+                break
+            else:
+                rondin_asignado = 6 # Si todos están llenos, se queda en 6
         
-        punto = fila["Punto_QR"]
-        
-        # LÓGICA DE BLOQUEO:
-        # Si el punto ya fue visto en este rondín, significa que inició un nuevo ciclo (Rondín siguiente)
-        if punto in estado[turno]['puntos_vistos']:
-            # Solo pasamos al siguiente rondín si no hemos llegado al 6
-            if estado[turno]['n_rondin'] < 6:
-                estado[turno]['n_rondin'] += 1
-                estado[turno]['puntos_vistos'] = set() # Limpiamos para el nuevo rondín
-        
-        estado[turno]['puntos_vistos'].add(punto)
-        
-        # Asignamos la etiqueta fija
-        rondines.append(f"Rondin {estado[turno]['n_rondin']}")
+        # Asignamos y sumamos al contador
+        conteo_puntos_por_rondin[turno][rondin_asignado] += 1
+        rondines.append(f"Rondin {rondin_asignado}")
         
     df["Rondin_Asignado"] = rondines
     return df
