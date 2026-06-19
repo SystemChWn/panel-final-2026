@@ -79,29 +79,39 @@ def asignar_rondines_por_puntos(df):
     if df.empty: return df
     df = df.sort_values(by="Fecha_Hora")
     
-    seguimiento = {'DIA': {r: set() for r in range(1, 7)}, 'NOCHE': {r: set() for r in range(1, 7)}}
-    resultados = []
+    # Preparamos las variables
+    rondines = []
+    contador = 1
+    ultimo_pt = 0
+    ultimo_turno = None
     
     for _, fila in df.iterrows():
         hora = fila["Fecha_Hora"].hour
-        turno = "DIA" if (7 <= hora < 19) else "NOCHE"
-        punto = str(fila["Punto_QR"]).replace("Punto ", "").strip()
+        turno_actual = "DIA" if (hora >= 7 and hora < 19) else "NOCHE"
         
-        # Buscamos el rondín donde este punto NO haya sido escaneado aún
-        rondin_asignado = 1
-        for r in range(1, 7):
-            if punto not in seguimiento[turno][r]:
-                rondin_asignado = r
-                break
-            else:
-                rondin_asignado = r
+        if ultimo_turno is not None and turno_actual != ultimo_turno:
+            contador = 1
+        else:
+            # 2. Lógica estricta de cambio
+            # Solo si detectamos un inicio (1-5) Y venimos de un final (>=40)
+            punto_actual = pd.to_numeric(str(fila["Punto_QR"]).replace("Punto ", ""), errors="coerce")
+            
+            if (punto_actual in [1, 2, 3, 4, 5, 6]) and (ultimo_pt >= 44):
+                contador += 1
+                if contador > 5: contador = 1
         
-        seguimiento[turno][rondin_asignado].add(punto)
-        resultados.append(f"Rondin {rondin_asignado}")
+        rondines.append(f"Rondin {contador}")
         
-    df["Rondin_Asignado"] = resultados
+        # Actualizamos variables de control
+        try:
+            ultimo_pt = int(punto_actual) if not pd.isna(punto_actual) else ultimo_pt
+        except:
+            pass
+        ultimo_turno = turno_actual
+        
+    df["Rondin_Asignado"] = rondines
     return df
-    
+
 # --- CARGA DATOS ---
 sheet_id = "1PjB61hZhT1SXO7eRgRgnxo39W2o5AaFdhFTjPz2eb7k"
 url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
@@ -179,27 +189,12 @@ else:
 
 # --- MATRIZ ---
 cols_rond = ["Rondin 1", "Rondin 2", "Rondin 3", "Rondin 4", "Rondin 5", "Rondin 6"]
-
-# 1. Definimos la lista aquí mismo para evitar el error de nombre
-lista_puntos = [str(i) for i in range(1, 45)]
-
-# 2. Creamos el DataFrame
-matriz = pd.DataFrame({"Punto_QR": lista_puntos})
-
-# 3. Llenado de la matriz
+matriz = pd.DataFrame({"Punto_QR": [f"Punto {i}" for i in range(1, 44)]})
 for col in cols_rond:
-    matriz[col] = "—" # Ponemos el guion por defecto
-    
-    # Filtramos los datos del turno y rondín correspondiente
-    df_rondin = df_filt[df_filt["Rondin_Asignado"] == col].copy()
-    
-    # Limpiamos los datos para que coincidan con los números "1", "2"... "44"
-    df_rondin["Punto_QR_Limpio"] = df_rondin["Punto_QR"].astype(str).str.replace("Punto ", "").str.strip()
-    
-    for _, f in df_rondin.iterrows():
-        pt_val = f["Punto_QR_Limpio"]
-        # Marcamos "SI" si el número coincide con la fila
-        matriz.loc[matriz["Punto_QR"] == pt_val, col] = "SI"
+    matriz[col] = "—"
+    for _, f in df_filt[df_filt["Rondin_Asignado"] == col].iterrows():
+        pt = f["Punto_QR"]
+        matriz.loc[(matriz["Punto_QR"] == pt) | (matriz["Punto_QR"] == f"Punto {pt}"), col] = "SI"
 
 # ----- CONTEO DE PUNTOS  -----
 conteo = (matriz[cols_rond] == 'SI').sum(axis=1)
