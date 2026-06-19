@@ -79,37 +79,20 @@ def asignar_rondines_por_puntos(df):
     if df.empty: return df
     df = df.sort_values(by="Fecha_Hora")
     
-    # Preparamos las variables
     rondines = []
-    ultimo_pt = 0
-    ultimo_turno = None
     
     for _, fila in df.iterrows():
+        # Seguimos detectando el turno para que los datos estén clasificados
         hora = fila["Fecha_Hora"].hour
-        turno_actual = "DIA" if (hora >= 7 and hora < 19) else "NOCHE"
+        turno_actual = "DIA" if (7 <= hora < 19) else "NOCHE"
         
-        # 1. Reinicio estricto por cambio de turno
-        if ultimo_turno is not None and turno_actual
-        else:
-            # 2. Lógica estricta de cambio
-            # Solo si detectamos un inicio (1-5) Y venimos de un final (>=40)
-            punto_actual = pd.to_numeric(str(fila["Punto_QR"]).replace("Punto ", ""), errors="coerce")
-            
-            if (punto_actual in [1, 2, 3, 4, 5, 6]) and (ultimo_pt >= 44):
-                contador += 1
-                if contador > 6
-        
-        rondines.append(f"Rondin {contador}")
-        
-        # Actualizamos variables de control
-        try:
-            ultimo_pt = int(punto_actual) if not pd.isna(punto_actual) else ultimo_pt
-        except:
-            pass
-        ultimo_turno = turno_actual
+        # Eliminamos el contador y la lógica de cambio.
+        # Todos se asignan al Rondín 1 (o el nombre que prefieras).
+        rondines.append("Rondin 1")
         
     df["Rondin_Asignado"] = rondines
     return df
+
 # --- CARGA DATOS ---
 sheet_id = "1PjB61hZhT1SXO7eRgRgnxo39W2o5AaFdhFTjPz2eb7k"
 url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
