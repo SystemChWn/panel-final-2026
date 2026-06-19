@@ -81,7 +81,7 @@ def asignar_rondines_por_puntos(df):
     
     # Preparamos las variables
     rondines = []
-    contador = 1
+    contador = 0 # ESTO SE CAMBIO --------------------------------------------------- 1
     ultimo_pt = 0
     ultimo_turno = None
     
