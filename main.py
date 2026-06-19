@@ -85,29 +85,32 @@ def cargar_datos(url):
 def asignar_rondines_por_puntos(df):
     if df.empty: return df
     
-    # Ordenamos los datos cronológicamente para procesarlos en orden
+    # Ordenamos por fecha para seguir el rastro real del guardia
     df = df.sort_values(by="Fecha_Hora")
     
     rondines = []
-    # Diccionario para llevar la cuenta de cuántos puntos únicos van en cada rondín
-    # Ejemplo: {'DIA': {'Puntos_Unicos': set()}}
-    turno_datos = {'DIA': {'puntos': set(), 'n_rondin': 1}, 'NOCHE': {'puntos': set(), 'n_rondin': 1}}
+    # Usamos un diccionario para llevar el registro de qué puntos ya se escanearon en el rondín actual
+    # Esto evita que el sistema "salte" de rondín antes de tiempo
+    historial_turno = {
+        'DIA': {'puntos_escaneados': set(), 'n_rondin': 1},
+        'NOCHE': {'puntos_escaneados': set(), 'n_rondin': 1}
+    }
     
     for _, fila in df.iterrows():
         hora = fila["Fecha_Hora"].hour
         turno = "DIA" if (7 <= hora < 19) else "NOCHE"
         punto = fila["Punto_QR"]
         
-        # Si el punto ya fue registrado en el rondín actual de este turno, 
-        # significa que es un nuevo ciclo (Rondín siguiente)
-        if punto in turno_datos[turno]['puntos']:
-            turno_datos[turno]['n_rondin'] += 1
-            turno_datos[turno]['puntos'] = set() # Reiniciamos el set para el nuevo rondín
-            
-        turno_datos[turno]['puntos'].add(punto)
+        # Lógica: Si el punto YA existe en el set de este rondín, 
+        # significa que el guardia empezó una nueva vuelta (siguiente rondín)
+        if punto in historial_turno[turno]['puntos_escaneados']:
+            historial_turno[turno]['n_rondin'] += 1
+            historial_turno[turno]['puntos_escaneados'] = set()
         
-        # Limitamos a máximo 6 rondines
-        n = min(turno_datos[turno]['n_rondin'], 6)
+        historial_turno[turno]['puntos_escaneados'].add(punto)
+        
+        # Asignamos el rondín limitado a 6
+        n = min(historial_turno[turno]['n_rondin'], 6)
         rondines.append(f"Rondin {n}")
         
     df["Rondin_Asignado"] = rondines
