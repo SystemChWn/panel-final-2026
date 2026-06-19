@@ -86,35 +86,39 @@ def asignar_rondines_por_puntos(df):
     if df.empty: return df
     df = df.sort_values(by="Fecha_Hora")
     
-    # Preparamos las variables
     rondines = []
-    contador = 1
-    ultimo_pt = 0
+    # Diccionario para rastrear cuántos puntos lleva cada rondín en este turno
+    # Estructura: {'DIA': {'Rondin 1': 0, 'Rondin 2': 0...}, 'NOCHE': {...}}
+    progreso = {
+        'DIA': {f'Rondin {i}': 0 for i in range(1, 7)},
+        'NOCHE': {f'Rondin {i}': 0 for i in range(1, 7)}
+    }
+    
     ultimo_turno = None
     
     for _, fila in df.iterrows():
         hora = fila["Fecha_Hora"].hour
-        turno_actual = "DIA" if (hora >= 7 and hora < 19) else "NOCHE"
+        turno_actual = "DIA" if (7 <= hora < 19) else "NOCHE"
         
-        # 1. Reinicio estricto por cambio de turno
+        # Si cambia el turno, reseteamos el progreso (o mantenemos si prefieres)
         if ultimo_turno is not None and turno_actual != ultimo_turno:
-            contador = 1
-        else:
-            # 2. Lógica estricta de cambio
-            # Solo si detectamos un inicio (1-5) Y venimos de un final (>=40)
-            punto_actual = pd.to_numeric(str(fila["Punto_QR"]).replace("Punto ", ""), errors="coerce")
-            
-            if (punto_actual in [1, 2, 3, 4, 5]) and (ultimo_pt >= 40):
-                contador += 1
-                if contador > 5: contador = 1
+            # Aquí podrías resetear si quieres que el turno nuevo empiece de cero
+            pass 
         
-        rondines.append(f"Rondin {contador}")
+        # Lógica de asignación:
+        # Buscamos el primer rondín que tenga menos de 44 puntos (o el límite que definas)
+        # En este caso, el Rondín 1 debe llenarse antes de pasar al 2.
+        rondin_asignado = "Rondin 1"
+        for i in range(1, 7):
+            r_nombre = f"Rondin {i}"
+            if progreso[turno_actual][r_nombre] < 44: # 44 es el total de puntos
+                rondin_asignado = r_nombre
+                progreso[turno_actual][r_nombre] += 1
+                break
+            else:
+                rondin_asignado = f"Rondin {i}" # Si ya se llenaron todos, se queda en el último
         
-        # Actualizamos variables de control
-        try:
-            ultimo_pt = int(punto_actual) if not pd.isna(punto_actual) else ultimo_pt
-        except:
-            pass
+        rondines.append(rondin_asignado)
         ultimo_turno = turno_actual
         
     df["Rondin_Asignado"] = rondines
