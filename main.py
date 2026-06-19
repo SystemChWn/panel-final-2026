@@ -79,37 +79,35 @@ def asignar_rondines_por_puntos(df):
     if df.empty: return df
     df = df.sort_values(by="Fecha_Hora")
     
-    # Preparamos las variables
     rondines = []
-    contador = 1
-    ultimo_pt = 0
-    ultimo_turno = None
+    
+    # Estado por turno
+    # Cada turno tiene su propio contador de Rondín (1 al 6)
+    estado = {'DIA': 1, 'NOCHE': 1}
+    ultimo_pt = { 'DIA': 0, 'NOCHE': 0 }
     
     for _, fila in df.iterrows():
         hora = fila["Fecha_Hora"].hour
-        turno_actual = "DIA" if (hora >= 7 and hora < 19) else "NOCHE"
+        turno = "DIA" if (7 <= hora < 19) else "NOCHE"
         
-        if ultimo_turno is not None and turno_actual != ultimo_turno:
-            contador = 1
-        else:
-            # 2. Lógica estricta de cambio
-            # Solo si detectamos un inicio (1-5) Y venimos de un final (>=40)
-            punto_actual = pd.to_numeric(str(fila["Punto_QR"]).replace("Punto ", ""), errors="coerce")
-            
+        # 1. Obtenemos el número del punto estrictamente (limpiando "Punto ")
+        raw_punto = str(fila["Punto_QR"]).replace("Punto ", "").strip()
+        punto_actual = int(raw_punto) if raw_punto.isdigit() else 0
+        
+        # 2. Lógica de detección de ciclo (solo detecta el paso del 44 al 1)
+        # Si escaneamos el punto 1 Y el anterior fue 44, cambiamos de rondín
         if punto_actual == 1 and ultimo_pt[turno] == 44:
             estado[turno] += 1
             if estado[turno] > 6:
                 estado[turno] = 1
         
-        rondines.append(f"Rondin {contador}")
+        # 3. Guardamos el rondín actual para este registro
+        rondines.append(f"Rondin {estado[turno]}")
         
-        # Actualizamos variables de control
-        try:
-            ultimo_pt = int(punto_actual) if not pd.isna(punto_actual) else ultimo_pt
-        except:
-            pass
-        ultimo_turno = turno_actual
-        
+        # 4. Guardamos este punto como el 'último' para comparar en la siguiente vuelta
+        if punto_actual > 0:
+            ultimo_pt[turno] = punto_actual
+            
     df["Rondin_Asignado"] = rondines
     return df
 
