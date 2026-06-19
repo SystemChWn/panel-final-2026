@@ -77,37 +77,27 @@ def cargar_datos(url):
 
 def asignar_rondines_por_puntos(df):
     if df.empty: return df
-    
-    # Ordenamos cronológicamente de forma estricta
     df = df.sort_values(by="Fecha_Hora")
     
     rondines = []
-    
-    # Diccionario para rastrear cuántos puntos únicos se han asignado a cada rondín por turno
-    # Estructura: {'DIA': {1: set(), 2: set(), ...}, 'NOCHE': {1: set(), ...}}
-    seguimiento = {
-        'DIA': {i: set() for i in range(1, 7)},
-        'NOCHE': {i: set() for i in range(1, 7)}
-    }
+    # Usamos un contador simple de puntos escaneados
+    # Si un punto ya se vio, significa que es una nueva vuelta
+    vistos = {'DIA': set(), 'NOCHE': set()}
+    contador_rondin = {'DIA': 1, 'NOCHE': 1}
     
     for _, fila in df.iterrows():
         hora = fila["Fecha_Hora"].hour
         turno = "DIA" if (7 <= hora < 19) else "NOCHE"
-        punto = str(fila["Punto_QR"]).strip()
+        punto = str(fila["Punto_QR"]).replace("Punto ", "").strip()
         
-        # BUSCAMOS EL PRIMER RONDÍN DISPONIBLE
-        # Si el rondín 'i' ya tiene el punto, lo asignamos ahí.
-        # Si no lo tiene, buscamos si hay espacio (menos de 44 puntos únicos)
-        asignado = 6 # Por defecto el último
+        # Si el punto ya se vio en esta vuelta, incrementamos rondín
+        if punto in vistos[turno]:
+            if contador_rondin[turno] < 6:
+                contador_rondin[turno] += 1
+                vistos[turno] = set() # Reiniciamos para la nueva vuelta
         
-        for i in range(1, 7):
-            # Si este rondín ya contiene este punto, o si tiene espacio (menos de 44), lo asignamos aquí
-            if punto in seguimiento[turno][i] or len(seguimiento[turno][i]) < 44:
-                seguimiento[turno][i].add(punto)
-                asignado = i
-                break
-        
-        rondines.append(f"Rondin {asignado}")
+        vistos[turno].add(punto)
+        rondines.append(f"Rondin {contador_rondin[turno]}")
         
     df["Rondin_Asignado"] = rondines
     return df
