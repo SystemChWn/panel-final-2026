@@ -180,30 +180,26 @@ else:
 # --- MATRIZ ---
 cols_rond = ["Rondin 1", "Rondin 2", "Rondin 3", "Rondin 4", "Rondin 5", "Rondin 6"]
 
-lista_numeros = [
-    "1", "2", "3", "4", "5", "6", "7", "8", 
-    "9", "10", "11", "12", "13", "14", "15", 
-    "16", "17", "18", "19", "20", "21", "22", 
-    "23", "24", "25", "26", "27", "28", "29", 
-    "30", "31", "32", "33", "34", "35", "36", 
-    "37", "38", "39", "40", "41", "42", "43", "44"
-]
+# 1. Definimos la lista aquí mismo para evitar el error de nombre
+lista_puntos = [str(i) for i in range(1, 45)]
 
+# 2. Creamos el DataFrame
 matriz = pd.DataFrame({"Punto_QR": lista_puntos})
 
+# 3. Llenado de la matriz
 for col in cols_rond:
-    matriz[col] = "—" # Valor inicial de guion
+    matriz[col] = "—" # Ponemos el guion por defecto
     
-    # Obtenemos los datos filtrados para esta columna
-    datos_rondin = df_filt[df_filt["Rondin_Asignado"] == col]
+    # Filtramos los datos del turno y rondín correspondiente
+    df_rondin = df_filt[df_filt["Rondin_Asignado"] == col].copy()
     
-    for _, f in datos_rondin.iterrows():
-        # Limpiamos el valor para que coincida con "Punto X"
-        pt_val = str(f["Punto_QR"]).replace("Punto ", "").strip()
-        pt_nombre = f"Punto {pt_val}"
-        
-        # Marcamos "SI" si el punto existe en el rondín
-        matriz.loc[matriz["Punto_QR"] == pt_nombre, col] = "SI"
+    # Limpiamos los datos para que coincidan con los números "1", "2"... "44"
+    df_rondin["Punto_QR_Limpio"] = df_rondin["Punto_QR"].astype(str).str.replace("Punto ", "").str.strip()
+    
+    for _, f in df_rondin.iterrows():
+        pt_val = f["Punto_QR_Limpio"]
+        # Marcamos "SI" si el número coincide con la fila
+        matriz.loc[matriz["Punto_QR"] == pt_val, col] = "SI"
 
 # ----- CONTEO DE PUNTOS  -----
 conteo = (matriz[cols_rond] == 'SI').sum(axis=1)
