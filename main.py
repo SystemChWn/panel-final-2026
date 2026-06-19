@@ -112,6 +112,7 @@ def asignar_rondines_por_puntos(df):
         
     df["Rondin_Asignado"] = rondines
     return df
+    
 # --- CARGA DATOS ---
 sheet_id = "1PjB61hZhT1SXO7eRgRgnxo39W2o5AaFdhFTjPz2eb7k"
 url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
