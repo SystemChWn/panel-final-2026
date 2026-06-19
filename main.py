@@ -77,38 +77,36 @@ def cargar_datos(url):
 
 def asignar_rondines_por_puntos(df):
     if df.empty: return df
-    df = df.sort_values(by="Fecha_Hora")
+    df = df.sort_values(by="Fecha_Hora") # Ordenamos cronológicamente
     
-    # Preparamos las variables
+    # Creamos un registro del avance por turno
+    # Cada turno (DIA/NOCHE) tendrá su propio seguimiento
+    estado = {} 
+    
     rondines = []
-    contador = 1
-    ultimo_pt = 0
-    ultimo_turno = None
     
     for _, fila in df.iterrows():
         hora = fila["Fecha_Hora"].hour
-        turno_actual = "DIA" if (hora >= 7 and hora < 19) else "NOCHE"
+        turno = "DIA" if (7 <= hora < 19) else "NOCHE"
         
-        # 1. Reinicio estricto por cambio de turno
-        if ultimo_turno is not None and turno_actual != ultimo_turno:
-            contador = 1
-        else:
-            # 2. Lógica estricta de cambio
-            # Solo si detectamos un inicio (1-5) Y venimos de un final (>=40)
-            punto_actual = pd.to_numeric(str(fila["Punto_QR"]).replace("Punto ", ""), errors="coerce")
-            
-            if (punto_actual in [1, 2, 3, 4, 5, 6]) and (ultimo_pt >= 44):
-                contador += 1
-                if contador > 6: contador = 1
+        # Inicializamos el seguimiento del turno si es nuevo
+        if turno not in estado:
+            estado[turno] = {'puntos_vistos': set(), 'n_rondin': 1}
         
-        rondines.append(f"Rondin {contador}")
+        punto = fila["Punto_QR"]
         
-        # Actualizamos variables de control
-        try:
-            ultimo_pt = int(punto_actual) if not pd.isna(punto_actual) else ultimo_pt
-        except:
-            pass
-        ultimo_turno = turno_actual
+        # LÓGICA DE BLOQUEO:
+        # Si el punto ya fue visto en este rondín, significa que inició un nuevo ciclo (Rondín siguiente)
+        if punto in estado[turno]['puntos_vistos']:
+            # Solo pasamos al siguiente rondín si no hemos llegado al 6
+            if estado[turno]['n_rondin'] < 6:
+                estado[turno]['n_rondin'] += 1
+                estado[turno]['puntos_vistos'] = set() # Limpiamos para el nuevo rondín
+        
+        estado[turno]['puntos_vistos'].add(punto)
+        
+        # Asignamos la etiqueta fija
+        rondines.append(f"Rondin {estado[turno]['n_rondin']}")
         
     df["Rondin_Asignado"] = rondines
     return df
