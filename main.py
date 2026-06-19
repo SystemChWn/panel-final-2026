@@ -190,11 +190,18 @@ else:
 # --- MATRIZ ---
 cols_rond = ["Rondin 1", "Rondin 2", "Rondin 3", "Rondin 4", "Rondin 5", "Rondin 6"]
 matriz = pd.DataFrame({"Punto_QR": [f"Punto {i}" for i in range(1, 45)]})
+
+# 2. Llenamos cada columna
 for col in cols_rond:
-    matriz[col] = "—"
-    for _, f in df_filt[df_filt["Rondin_Asignado"] == col].iterrows():
-        pt = f["Punto_QR"]
-        matriz.loc[(matriz["Punto_QR"] == pt) | (matriz["Punto_QR"] == f"Punto {pt}"), col] = "SI"
+    matriz[col] = "—" # Ponemos el guion rojo por defecto en toda la columna
+    
+    puntos_en_rondin = df_filt[df_filt["Rondin_Asignado"] == col]["Punto_QR"].unique()
+    
+    for pt in puntos_en_rondin:
+        # Buscamos la fila exacta por el nombre "Punto X"
+        mask = matriz["Punto_QR"] == f"Punto {pt}"
+        if mask.any():
+            matriz.loc[mask, col] = "SI"
 
 # ----- CONTEO DE PUNTOS  -----
 conteo = (matriz[cols_rond] == 'SI').sum(axis=1)
