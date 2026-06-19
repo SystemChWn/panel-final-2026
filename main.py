@@ -97,9 +97,6 @@ def asignar_rondines_por_puntos(df):
         for i in range(1, 7):
             if conteo_puntos_por_rondin[turno][i] < 44:
                 rondin_asignado = i
-                break
-            else:
-                rondin_asignado = 6 # Si todos están llenos, se queda en 6
         
         # Asignamos y sumamos al contador
         conteo_puntos_por_rondin[turno][rondin_asignado] += 1
