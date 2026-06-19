@@ -78,37 +78,40 @@ def cargar_datos(url):
 def asignar_rondines_por_puntos(df):
     if df.empty: return df
     
-    # 1. Ordenamos cronológicamente de forma obligatoria
+    # 1. Ordenamos cronológicamente
     df = df.sort_values(by="Fecha_Hora")
     
-    # 2. Creamos un contador de registros por turno
-    # estructura: {'DIA': 0, 'NOCHE': 0}
-    # Esto lleva la cuenta total de cuántos puntos se han escaneado en el turno
-    contador_global_turno = {'DIA': 0, 'NOCHE': 0}
-    
     rondines = []
+    
+    # Estado para rastrear el ciclo actual
+    # turno_estado = {'DIA': {'rondin': 1, 'ultimo_punto': 0}, 'NOCHE': {...}}
+    estado = {
+        'DIA': {'rondin': 1, 'ultimo_punto': 0},
+        'NOCHE': {'rondin': 1, 'ultimo_punto': 0}
+    }
     
     for _, fila in df.iterrows():
         hora = fila["Fecha_Hora"].hour
         turno = "DIA" if (7 <= hora < 19) else "NOCHE"
         
-        # 3. Calculamos el rondín basado en el conteo actual
-        # Cada rondín tiene 44 puntos. 
-        # (Total registros / 44) nos da el número de rondín.
-        # Usamos // para división entera y sumamos 1.
-        n = (contador_global_turno[turno] // 44) + 1
+        # Limpiamos el número de punto (asumiendo formato "Punto 1", "1", etc.)
+        punto_str = str(fila["Punto_QR"]).replace("Punto ", "").strip()
+        punto_actual = int(punto_str) if punto_str.isdigit() else 0
         
-        # 4. Limitamos a un máximo de 6
-        if n > 6: n = 6
+        # LÓGICA DE CAMBIO DE RONDÍN
+        # Si el punto actual es 1 y el anterior fue >= 40, es un nuevo rondín
+        if punto_actual == 1 and estado[turno]['ultimo_punto'] >= 40:
+            if estado[turno]['rondin'] < 6:
+                estado[turno]['rondin'] += 1
         
-        rondines.append(f"Rondin {n}")
+        # Asignamos el rondín actual
+        rondines.append(f"Rondin {estado[turno]['rondin']}")
         
-        # 5. Incrementamos el contador del turno
-        contador_global_turno[turno] += 1
+        # Actualizamos el estado
+        estado[turno]['ultimo_punto'] = punto_actual
         
     df["Rondin_Asignado"] = rondines
     return df
-
 # --- CARGA DATOS ---
 sheet_id = "1PjB61hZhT1SXO7eRgRgnxo39W2o5AaFdhFTjPz2eb7k"
 url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
