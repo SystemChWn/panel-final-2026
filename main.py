@@ -79,27 +79,27 @@ def asignar_rondines_por_puntos(df):
     if df.empty: return df
     df = df.sort_values(by="Fecha_Hora")
     
-    rondines = []
-    # Usamos un contador simple de puntos escaneados
-    # Si un punto ya se vio, significa que es una nueva vuelta
-    vistos = {'DIA': set(), 'NOCHE': set()}
-    contador_rondin = {'DIA': 1, 'NOCHE': 1}
+    seguimiento = {'DIA': {r: set() for r in range(1, 7)}, 'NOCHE': {r: set() for r in range(1, 7)}}
+    resultados = []
     
     for _, fila in df.iterrows():
         hora = fila["Fecha_Hora"].hour
         turno = "DIA" if (7 <= hora < 19) else "NOCHE"
         punto = str(fila["Punto_QR"]).replace("Punto ", "").strip()
         
-        # Si el punto ya se vio en esta vuelta, incrementamos rondín
-        if punto in vistos[turno]:
-            if contador_rondin[turno] < 6:
-                contador_rondin[turno] += 1
-                vistos[turno] = set() # Reiniciamos para la nueva vuelta
+        # Buscamos el rondín donde este punto NO haya sido escaneado aún
+        rondin_asignado = 1
+        for r in range(1, 7):
+            if punto not in seguimiento[turno][r]:
+                rondin_asignado = r
+                break
+            else:
+                rondin_asignado = r
         
-        vistos[turno].add(punto)
-        rondines.append(f"Rondin {contador_rondin[turno]}")
+        seguimiento[turno][rondin_asignado].add(punto)
+        resultados.append(f"Rondin {rondin_asignado}")
         
-    df["Rondin_Asignado"] = rondines
+    df["Rondin_Asignado"] = resultados
     return df
     
 # --- CARGA DATOS ---
@@ -179,19 +179,31 @@ else:
 
 # --- MATRIZ ---
 cols_rond = ["Rondin 1", "Rondin 2", "Rondin 3", "Rondin 4", "Rondin 5", "Rondin 6"]
-matriz = pd.DataFrame({"Punto_QR": [f"Punto {i}" for i in range(1, 45)]})
 
-# 2. Llenamos cada columna
+lista_numeros = [
+    "1", "2", "3", "4", "5", "6", "7", "8", 
+    "9", "10", "11", "12", "13", "14", "15", 
+    "16", "17", "18", "19", "20", "21", "22", 
+    "23", "24", "25", "26", "27", "28", "29", 
+    "30", "31", "32", "33", "34", "35", "36", 
+    "37", "38", "39", "40", "41", "42", "43", "44"
+]
+
+matriz = pd.DataFrame({"Punto_QR": lista_puntos})
+
 for col in cols_rond:
-    matriz[col] = "—" # Ponemos el guion rojo por defecto en toda la columna
+    matriz[col] = "—" # Valor inicial de guion
     
-    puntos_en_rondin = df_filt[df_filt["Rondin_Asignado"] == col]["Punto_QR"].unique()
+    # Obtenemos los datos filtrados para esta columna
+    datos_rondin = df_filt[df_filt["Rondin_Asignado"] == col]
     
-    for pt in puntos_en_rondin:
-        # Buscamos la fila exacta por el nombre "Punto X"
-        mask = matriz["Punto_QR"] == f"Punto {pt}"
-        if mask.any():
-            matriz.loc[mask, col] = "SI"
+    for _, f in datos_rondin.iterrows():
+        # Limpiamos el valor para que coincida con "Punto X"
+        pt_val = str(f["Punto_QR"]).replace("Punto ", "").strip()
+        pt_nombre = f"Punto {pt_val}"
+        
+        # Marcamos "SI" si el punto existe en el rondín
+        matriz.loc[matriz["Punto_QR"] == pt_nombre, col] = "SI"
 
 # ----- CONTEO DE PUNTOS  -----
 conteo = (matriz[cols_rond] == 'SI').sum(axis=1)
