@@ -64,14 +64,7 @@ st.markdown("""
     div[data-testid="stVerticalBlock"] > div:last-child {
         margin-bottom: 0px !important;
         padding-bottom: 0px !important;
-    
-    [data-testid="stSidebar"] {
-    display: none !important;}
-    button[kind="header"] {
-    display: none !important;}
-    header {
-    visibility: hidden !important;}
-    
+            
     </script>
     """, unsafe_allow_html=True)
 
@@ -84,38 +77,42 @@ def cargar_datos(url):
 
 def asignar_rondines_por_puntos(df):
     if df.empty: return df
-    
-    # Ordenamos por fecha para seguir el rastro real del guardia
     df = df.sort_values(by="Fecha_Hora")
     
+    # Preparamos las variables
     rondines = []
-    # Usamos un diccionario para llevar el registro de qué puntos ya se escanearon en el rondín actual
-    # Esto evita que el sistema "salte" de rondín antes de tiempo
-    historial_turno = {
-        'DIA': {'puntos_escaneados': set(), 'n_rondin': 1},
-        'NOCHE': {'puntos_escaneados': set(), 'n_rondin': 1}
-    }
+    contador = 1
+    ultimo_pt = 0
+    ultimo_turno = None
     
     for _, fila in df.iterrows():
         hora = fila["Fecha_Hora"].hour
-        turno = "DIA" if (7 <= hora < 19) else "NOCHE"
-        punto = fila["Punto_QR"]
+        turno_actual = "DIA" if (hora >= 7 and hora < 19) else "NOCHE"
         
-        # Lógica: Si el punto YA existe en el set de este rondín, 
-        # significa que el guardia empezó una nueva vuelta (siguiente rondín)
-        if punto in historial_turno[turno]['puntos_escaneados']:
-            historial_turno[turno]['n_rondin'] += 1
-            historial_turno[turno]['puntos_escaneados'] = set()
+        # 1. Reinicio estricto por cambio de turno
+        if ultimo_turno is not None and turno_actual != ultimo_turno:
+            contador = 1
+        else:
+            # 2. Lógica estricta de cambio
+            # Solo si detectamos un inicio (1-5) Y venimos de un final (>=40)
+            punto_actual = pd.to_numeric(str(fila["Punto_QR"]).replace("Punto ", ""), errors="coerce")
+            
+            if (punto_actual in [1, 2, 3, 4, 5]) and (ultimo_pt >= 40):
+                contador += 1
+                if contador > 5: contador = 1
         
-        historial_turno[turno]['puntos_escaneados'].add(punto)
+        rondines.append(f"Rondin {contador}")
         
-        # Asignamos el rondín limitado a 6
-        n = min(historial_turno[turno]['n_rondin'], 6)
-        rondines.append(f"Rondin {n}")
+        # Actualizamos variables de control
+        try:
+            ultimo_pt = int(punto_actual) if not pd.isna(punto_actual) else ultimo_pt
+        except:
+            pass
+        ultimo_turno = turno_actual
         
     df["Rondin_Asignado"] = rondines
     return df
-    
+
 # --- CARGA DATOS ---
 sheet_id = "1PjB61hZhT1SXO7eRgRgnxo39W2o5AaFdhFTjPz2eb7k"
 url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
