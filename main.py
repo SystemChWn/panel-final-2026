@@ -79,28 +79,33 @@ def asignar_rondines_por_puntos(df):
     if df.empty: return df
     df = df.sort_values(by="Fecha_Hora")
     
-    # Usaremos un contador global de cuántos puntos llevamos en cada rondín
-    # Ejemplo: {'DIA': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}}
-    conteo_puntos_por_rondin = {
-        'DIA': {i: 0 for i in range(1, 7)},
-        'NOCHE': {i: 0 for i in range(1, 7)}
-    }
-    
     rondines = []
+    # Usaremos un diccionario para controlar el estado de cada turno
+    # 'puntos_en_rondin_actual': set() -> Aquí guardamos qué puntos lleva el rondín que se está escaneando AHORA
+    estado = {
+        'DIA': {'puntos_en_rondin_actual': set(), 'n_rondin': 1},
+        'NOCHE': {'puntos_en_rondin_actual': set(), 'n_rondin': 1}
+    }
     
     for _, fila in df.iterrows():
         hora = fila["Fecha_Hora"].hour
         turno = "DIA" if (7 <= hora < 19) else "NOCHE"
+        punto = fila["Punto_QR"]
         
-        # Buscamos en qué rondín hay espacio (menos de 44 puntos)
-        rondin_asignado = 1
-        for i in range(1, 7):
-            if conteo_puntos_por_rondin[turno][i] < 44:
-                rondin_asignado = i
+        # LÓGICA DE DETECCIÓN DE VUELTA:
+        # Si el punto que acaba de escanear YA ESTÁ en la lista de este rondín,
+        # es físicamente imposible que sea el mismo rondín. ¡Es una vuelta nueva!
+        if punto in estado[turno]['puntos_en_rondin_actual']:
+            # Solo pasamos al siguiente si no hemos llegado al 6
+            if estado[turno]['n_rondin'] < 6:
+                estado[turno]['n_rondin'] += 1
+                estado[turno]['puntos_en_rondin_actual'] = set() # Limpiamos para el nuevo
         
-        # Asignamos y sumamos al contador
-        conteo_puntos_por_rondin[turno][rondin_asignado] += 1
-        rondines.append(f"Rondin {rondin_asignado}")
+        # Agregamos el punto al set del rondín actual
+        estado[turno]['puntos_en_rondin_actual'].add(punto)
+        
+        # Asignamos
+        rondines.append(f"Rondin {estado[turno]['n_rondin']}")
         
     df["Rondin_Asignado"] = rondines
     return df
