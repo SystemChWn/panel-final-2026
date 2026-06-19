@@ -77,14 +77,14 @@ def cargar_datos(url):
 
 def asignar_rondines_por_puntos(df):
     if df.empty: return df
+    
+    # 1. Ordenamos cronológicamente de forma obligatoria
     df = df.sort_values(by="Fecha_Hora")
     
-    # Aquí guardamos cuántos puntos hemos asignado a cada columna
-    # estructura: {'DIA': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}, 'NOCHE': ...}
-    conteo = {
-        'DIA': {i: 0 for i in range(1, 7)},
-        'NOCHE': {i: 0 for i in range(1, 7)}
-    }
+    # 2. Creamos un contador de registros por turno
+    # estructura: {'DIA': 0, 'NOCHE': 0}
+    # Esto lleva la cuenta total de cuántos puntos se han escaneado en el turno
+    contador_global_turno = {'DIA': 0, 'NOCHE': 0}
     
     rondines = []
     
@@ -92,19 +92,19 @@ def asignar_rondines_por_puntos(df):
         hora = fila["Fecha_Hora"].hour
         turno = "DIA" if (7 <= hora < 19) else "NOCHE"
         
-        # BUSCAMOS LA PRIMERA COLUMNA QUE NO ESTÉ LLENA
-        # Empezamos desde el 1. Si el 1 tiene menos de 44, ahí lo ponemos.
-        # Si el 1 ya llegó a 44, probamos el 2, y así...
-        rondin_objetivo = 1
-        for i in range(1, 7):
-            if conteo[turno][i] < 44:
-                rondin_objetivo = i
-                break
-            else:
-                rondin_objetivo = 6 # Si todos están llenos, se queda en el 6
+        # 3. Calculamos el rondín basado en el conteo actual
+        # Cada rondín tiene 44 puntos. 
+        # (Total registros / 44) nos da el número de rondín.
+        # Usamos // para división entera y sumamos 1.
+        n = (contador_global_turno[turno] // 44) + 1
         
-        conteo[turno][rondin_objetivo] += 1
-        rondines.append(f"Rondin {rondin_objetivo}")
+        # 4. Limitamos a un máximo de 6
+        if n > 6: n = 6
+        
+        rondines.append(f"Rondin {n}")
+        
+        # 5. Incrementamos el contador del turno
+        contador_global_turno[turno] += 1
         
     df["Rondin_Asignado"] = rondines
     return df
