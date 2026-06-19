@@ -79,16 +79,36 @@ def asignar_rondines_por_puntos(df):
     if df.empty: return df
     df = df.sort_values(by="Fecha_Hora")
     
+    # Preparamos las variables
     rondines = []
+    ultimo_pt = 0
+    ultimo_turno = None
     
     for _, fila in df.iterrows():
-        # Seguimos detectando el turno para que los datos estén clasificados
         hora = fila["Fecha_Hora"].hour
-        turno_actual = "DIA" if (7 <= hora < 19) else "NOCHE"
+        turno_actual = "DIA" if (hora >= 7 and hora < 19) else "NOCHE"
         
-        # Eliminamos el contador y la lógica de cambio.
-        # Todos se asignan al Rondín 1 (o el nombre que prefieras).
+        # 1. Reinicio estricto por cambio de turno
+        if ultimo_turno is not None and turno_actual != ultimo_turno:
+            pass # Ya no reseteamos contador
+        else:
+            # 2. Mantenemos tu lógica de detección exacta
+            punto_actual = pd.to_numeric(str(fila["Punto_QR"]).replace("Punto ", ""), errors="coerce")
+            
+            if (punto_actual in [1, 2, 3, 4, 5, 6]) and (ultimo_pt >= 44):
+                # Aquí estaba el contador, ya no existe.
+                # La condición se cumple, pero el sistema no hace nada con ella.
+                pass
+        
+        # Asignamos siempre "Rondin 1" (o el que tú definas manualmente)
         rondines.append("Rondin 1")
+        
+        # Actualizamos variables de control
+        try:
+            ultimo_pt = int(punto_actual) if not pd.isna(punto_actual) else ultimo_pt
+        except:
+            pass
+        ultimo_turno = turno_actual
         
     df["Rondin_Asignado"] = rondines
     return df
