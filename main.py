@@ -174,6 +174,7 @@ else:
 
 # --- MATRIZ ---
 cols_rond = ["Rondin 1", "Rondin 2", "Rondin 3", "Rondin 4", "Rondin 5", "Rondin 6"]
+
 lista_numeros = [str(i) for i in range(1, 45)]
 matriz = pd.DataFrame({"Punto_QR": lista_numeros})
 
@@ -185,10 +186,10 @@ for col in cols_rond:
     for _, f in datos_rondin.iterrows():
         # Obtenemos la hora del registro
         hora_formato = f["Fecha_Hora"].strftime("%H:%M")
-    
+        
         pt_val = str(f["Punto_QR"]).replace("Punto ", "").strip()
         
-        matriz.loc[matriz["Punto_QR"] == pt_val, col] = hora_formato
+        matriz.loc[matriz["Punto_QR"] == pt_val, col] = f"SI - ({hora_formato})"
 
 # ----- CONTEO DE PUNTOS  -----
 conteo = (matriz[cols_rond] == 'SI').sum(axis=1)
