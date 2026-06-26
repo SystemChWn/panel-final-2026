@@ -1,6 +1,6 @@
 streamlit
 pandas
-xlsxwriter
 plotly
 pytz
+numpy
 streamlit-autorefresh
