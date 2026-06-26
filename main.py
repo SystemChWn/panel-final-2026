@@ -86,7 +86,6 @@ def asignar_rondines_por_puntos(df):
         if ultimo_turno is not None and turno_actual != ultimo_turno:
             contador = 1
         else:
-            # Solo si detectamos un inicio (1-5) Y venimos de un final (>=40)
             punto_actual = pd.to_numeric(str(fila["Punto_QR"]).replace("Punto ", ""), errors="coerce")
             
             if (punto_actual in [0, 1]) and (ultimo_pt >= 44):
@@ -183,7 +182,6 @@ for col in cols_rond:
     for _, f in datos_rondin.iterrows():
         hora_formato = f["Fecha_Hora"].strftime("%H:%M")
         pt_val = str(f["Punto_QR"]).replace("Punto ", "").strip()
-        # Asignamos el nuevo formato
         matriz.loc[matriz["Punto_QR"] == pt_val, col] = f"SI - {hora_formato}"
 
 # ----- CONTEO DE PUNTOS  -----
@@ -194,7 +192,6 @@ matriz["Puntos_Visitados"] = conteo.astype(str) + "/6"
 # --- FUNCIÓN DE COLORES CORREGIDA ---
 def color_semaforo_suave(val):
     v = str(val).strip()
-    # Ahora verificamos si el texto EMPIEZA con "SI"
     if v.startswith("SI"):
         return 'background-color: #D4EDDA; color: #155724; font-weight: bold; text-align: center;'
     elif v == "—":
