@@ -184,7 +184,7 @@ for col in cols_rond:
         hora_formato = f["Fecha_Hora"].strftime("%H:%M")
         pt_val = str(f["Punto_QR"]).replace("Punto ", "").strip()
         # Asignamos el nuevo formato
-        matriz.loc[matriz["Punto_QR"] == pt_val, col] = f"SI - ({hora_formato})"
+        matriz.loc[matriz["Punto_QR"] == pt_val, col] = f"SI - {hora_formato}"
 
 # ----- CONTEO DE PUNTOS  -----
 # Contamos si la celda empieza con "SI" (indicando que fue visitado)
