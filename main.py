@@ -174,31 +174,28 @@ else:
 
 # --- MATRIZ ---
 cols_rond = ["Rondin 1", "Rondin 2", "Rondin 3", "Rondin 4", "Rondin 5", "Rondin 6"]
-
 lista_numeros = [str(i) for i in range(1, 45)]
 matriz = pd.DataFrame({"Punto_QR": lista_numeros})
 
 for col in cols_rond:
     matriz[col] = "—" # Valor inicial
-    
     datos_rondin = df_filt[df_filt["Rondin_Asignado"] == col]
-    
     for _, f in datos_rondin.iterrows():
-        # Obtenemos la hora del registro
         hora_formato = f["Fecha_Hora"].strftime("%H:%M")
-        
         pt_val = str(f["Punto_QR"]).replace("Punto ", "").strip()
-        
+        # Asignamos el nuevo formato
         matriz.loc[matriz["Punto_QR"] == pt_val, col] = f"SI - ({hora_formato})"
 
 # ----- CONTEO DE PUNTOS  -----
-conteo = (matriz[cols_rond] == 'SI').sum(axis=1)
+# Contamos si la celda empieza con "SI" (indicando que fue visitado)
+conteo = matriz[cols_rond].apply(lambda col: col.str.startswith("SI")).sum(axis=1)
 matriz["Puntos_Visitados"] = conteo.astype(str) + "/6"
 
-# --- FUNCIÓN DE COLORES  ---
+# --- FUNCIÓN DE COLORES CORREGIDA ---
 def color_semaforo_suave(val):
     v = str(val).strip()
-    if v == "SI":
+    # Ahora verificamos si el texto EMPIEZA con "SI"
+    if v.startswith("SI"):
         return 'background-color: #D4EDDA; color: #155724; font-weight: bold; text-align: center;'
     elif v == "—":
         return 'background-color: #F8D7DA; color: #721C24; text-align: center;'
@@ -211,7 +208,6 @@ matriz_estilizada = matriz.style.map(
     lambda x: 'text-align: center; font-weight: bold; background-color: transparent;', 
     subset=["Puntos_Visitados"]
 )
-
 # ---- TABLA SEPARADA -----
 columnas_rondines = ["Rondin 1", "Rondin 2", "Rondin 3", "Rondin 4", "Rondin 5", "Rondin 6"]
 columnas_ordenadas = ["Punto_QR"] + columnas_rondines + ["TOTAL"]
