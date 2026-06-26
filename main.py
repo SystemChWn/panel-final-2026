@@ -15,27 +15,22 @@ st.set_page_config(layout="wide")
 # --- CSS ---
 st.markdown("""
     <style>
-    /* Ajustes generales */
     .block-container { padding-top: 2rem !important; }
     h1 { margin-top: -10px !important; }
             
-    /* Esto elimina el margen superior de los widgets (selectbox) */
     [data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
         gap: 0.20rem !important; /* Ajusta este valor si quieres más o menos espacio */
     }
     
-    /* Forzar al sidebar a no tener altura fija y ignorar el scroll */
     section[data-testid="stSidebar"] {
         height: auto !important;
         overflow: hidden !important;
     }
             
-    /* Esta es la clave: esto elimina el contenedor que obliga a que el sidebar sea alto */
     [data-testid="stSidebarContent"] {
         height: auto !important;
     }
             
-    /* El botón se adaptará automáticamente al tema*/
     div.stDownloadButton > button {
         width: 200%;
         height: 50px;
@@ -46,7 +41,7 @@ st.markdown("""
         transition: 0.3s;
     }
     
-    /* Efecto al pasar el mouse por encima */
+    /* EFECTO MOUSE */
     div.stDownloadButton > button:hover {
         background-color: #60A5FA;
         color: white;
@@ -54,13 +49,12 @@ st.markdown("""
             
     footer {visibility: hidden;}
 
-    /* Eliminar el bloque de margen inferior del bloque principal */
+
     .block-container {
         padding-bottom: 0rem !important;
         margin-bottom: 0rem !important;
     }
 
-    /* Eliminar el espacio extra del último elemento en la página */
     div[data-testid="stVerticalBlock"] > div:last-child {
         margin-bottom: 0px !important;
         padding-bottom: 0px !important;
@@ -88,12 +82,10 @@ def asignar_rondines_por_puntos(df):
     for _, fila in df.iterrows():
         hora = fila["Fecha_Hora"].hour
         turno_actual = "DIA" if (hora >= 7 and hora < 19) else "NOCHE"
-        
-        # 1. Reinicio estricto por cambio de turno
+
         if ultimo_turno is not None and turno_actual != ultimo_turno:
             contador = 1
         else:
-            # 2. Lógica estricta de cambio
             # Solo si detectamos un inicio (1-5) Y venimos de un final (>=40)
             punto_actual = pd.to_numeric(str(fila["Punto_QR"]).replace("Punto ", ""), errors="coerce")
             
@@ -103,7 +95,6 @@ def asignar_rondines_por_puntos(df):
         
         rondines.append(f"Rondin {contador}")
         
-        # Actualizamos variables de control
         try:
             ultimo_pt = int(punto_actual) if not pd.isna(punto_actual) else ultimo_pt
         except:
@@ -118,27 +109,21 @@ sheet_id = "1PjB61hZhT1SXO7eRgRgnxo39W2o5AaFdhFTjPz2eb7k"
 url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
 try:
     df_raw = cargar_datos(url)
-    
-    # 1. Limpiamos espacios y quitamos ".0" del Punto QR
+
     df_raw["Punto_QR"] = df_raw["Punto_QR"].astype(str).str.replace(".0", "", regex=False).str.strip()
-    
-    # 2. CONVERSIÓN DE FECHA FORZADA
-    # Le decimos explícitamente: dayfirst=True y el formato %d/%m/%Y %H:%M:%S
+
     df_raw["Fecha_Hora"] = pd.to_datetime(
         df_raw["Fecha_Hora"].str.strip(), 
         format="%d/%m/%Y %H:%M:%S", 
         errors="coerce"
     )
-    
-    # Eliminamos filas donde la fecha no se pudo convertir
+
     df_raw = df_raw.dropna(subset=["Fecha_Hora"])
-    
-    # 3. Ahora extraemos los componentes
+
     df_raw["Dia_Num"] = df_raw["Fecha_Hora"].dt.day
     df_raw["Mes_Num"] = df_raw["Fecha_Hora"].dt.month
     df_raw["Anio_Num"] = df_raw["Fecha_Hora"].dt.year
     
-    # 4. Asignación de rondines
     df_raw = asignar_rondines_por_puntos(df_raw)
 
 except Exception as e:
@@ -160,8 +145,7 @@ def enviar_correo(destinatario, archivo_bytes, asunto="REPORTE DE RONDINES_SEGUR
             subtype='xlsx',
             filename=f"Reporte_Rondines_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
         )
-        
-        # Configuración SMTP (Ejemplo Gmail)
+
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
             smtp.login("sistemaschgw@gmail.com", "mlzppevcdubhsart")
             smtp.send_message(msg)
@@ -190,12 +174,21 @@ else:
 
 # --- MATRIZ ---
 cols_rond = ["Rondin 1", "Rondin 2", "Rondin 3", "Rondin 4", "Rondin 5", "Rondin 6"]
-matriz = pd.DataFrame({"Punto_QR": [f"Punto {i}" for i in range(1, 44)]})
+lista_numeros = [str(i) for i in range(1, 45)]
+matriz = pd.DataFrame({"Punto_QR": lista_numeros})
+
 for col in cols_rond:
-    matriz[col] = "—"
-    for _, f in df_filt[df_filt["Rondin_Asignado"] == col].iterrows():
-        pt = f["Punto_QR"]
-        matriz.loc[(matriz["Punto_QR"] == pt) | (matriz["Punto_QR"] == f"Punto {pt}"), col] = "SI"
+    matriz[col] = "—" # Valor inicial
+    
+    datos_rondin = df_filt[df_filt["Rondin_Asignado"] == col]
+    
+    for _, f in datos_rondin.iterrows():
+        # Obtenemos la hora del registro
+        hora_formato = f["Fecha_Hora"].strftime("%H:%M")
+    
+        pt_val = str(f["Punto_QR"]).replace("Punto ", "").strip()
+        
+        matriz.loc[matriz["Punto_QR"] == pt_val, col] = hora_formato
 
 # ----- CONTEO DE PUNTOS  -----
 conteo = (matriz[cols_rond] == 'SI').sum(axis=1)
@@ -248,7 +241,6 @@ with col_titulo: st.title("PANEL DE SUPERVISIÓN")
 # --- 6. VISUALIZACIÓN (GRÁFICAS) ---
 cumplimiento_gral = (matriz[cols_rond] == 'SI').sum().sum() / (44 * 6) * 100
 
-# Usamos st.container para el efecto decorativo
 with st.container(border=True):
     dash1, dash2 = st.columns(2)
 
@@ -275,17 +267,14 @@ with st.container(border=True):
             st.markdown("**Rondín en curso:** Sin registros")
             rondin_act = None 
         
-        # 2. Conteo de puntos (solo si tenemos un rondín válido)
         puntos_contados = 0
         if rondin_act and rondin_act in cols_rond:
             puntos_contados = (matriz[rondin_act] == "SI").sum()
         
         st.markdown(f"Progreso: {puntos_contados} de 44 puntos escaneados")
         
-        # 3. Barra de progreso
         st.progress(min(float(puntos_contados/44), 1.0))
         
-        # 4. Nota decorativa con tamaño H2
         st.markdown(
             f"<h2 style='text-align: center; color: #60A5FA;'>TURNO: {turno_sel}</h2>", 
             unsafe_allow_html=True
@@ -304,17 +293,14 @@ st.table(df_recuadro_separado)
 
 # --- SIDEBAR (DESCARGA Y CORREO) ---
 with st.sidebar:
-    # 1. Lógica del nombre del archivo dinámico
     fecha_hoy = obtener_hora_local().strftime("%d-%m-%Y")
-    # Usamos turno_sel que ya tienes definido en tu sidebar
     nombre_archivo = f"RONDINES_{fecha_hoy}_{turno_sel}.xlsx"
     
-    # 2. Generación del archivo en memoria
     buf = BytesIO()
     with pd.ExcelWriter(buf, engine="xlsxwriter") as w:
         matriz.to_excel(w, index=False)
         
-    # 3. Botón de descarga
+    # Botón de descarga
     st.download_button(
         label="⭳ Descargar Excel", 
         data=buf.getvalue(), 
@@ -329,7 +315,6 @@ with st.sidebar:
     
     if st.button("Enviar Correo"):
         if email_destino:
-            # Reutilizamos el 'buf' que generamos arriba para la descarga
             if enviar_correo(email_destino, buf):
                 st.success(f"Correo enviado correctamente.")
         else:
